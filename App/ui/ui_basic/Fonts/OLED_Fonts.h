@@ -1,0 +1,75 @@
+#ifndef OLED_FONTS_H
+#define OLED_FONTS_H
+
+#include <stdint.h>
+
+
+
+/*中文字符字节宽度*/
+#define OLED_CHN_CHAR_WIDTH			(3)		//UTF-8编码格式给3，GB2312编码格式给2
+
+/*字模基本单元*/
+typedef struct 
+{
+	char Index[OLED_CHN_CHAR_WIDTH + 1];	//汉字索引
+	uint8_t Data[60];						//字模数据
+} ChineseCell20x20_t;
+typedef struct 
+{
+	char Index[OLED_CHN_CHAR_WIDTH + 1];	//汉字索引
+	uint8_t Data[32];						//字模数据
+} ChineseCell16x16_t;
+typedef struct 
+{
+    char Index[OLED_CHN_CHAR_WIDTH + 1];   // 汉字索引
+    uint8_t Data[24];                      // 字模数据，12*12的汉字需要24字节
+} ChineseCell12x12_t;
+
+
+/*ASCII字模数据声明*/
+extern const uint8_t OLED_6x8[][6];
+extern const uint8_t OLED_7x12[][14];
+extern const uint8_t OLED_8x16[][16]; 
+
+
+/*汉字字模数据声明*/
+extern const ChineseCell12x12_t OLED_12x12[];  // 声明12x12字模数组
+extern const ChineseCell16x16_t OLED_16x16[];
+extern const ChineseCell20x20_t OLED_20x20[];
+
+
+/*图像数据声明*/
+extern const uint8_t Arrow_Down[];
+extern const uint8_t UnKnown[];
+extern const uint8_t Image_setings[];
+extern const uint8_t Image_window[];
+extern const uint8_t Image_wechat[];
+extern const uint8_t Image_qq[];
+extern const uint8_t Image_alipay[];
+extern const uint8_t Image_more[];
+extern const uint8_t Image_calc[];
+extern const uint8_t Image_night[];
+extern const uint8_t Image_sleep[];
+
+
+extern const uint8_t Image_settings_64[];
+extern const uint8_t Image_calc_64[];
+extern const uint8_t Image_wechat_64[];
+extern const uint8_t Image_alipay_64[];
+extern const uint8_t Image_night_64[];
+extern const uint8_t Image_more_64[];
+extern const uint8_t OLED_UI_LOGOTEXT[];
+extern const uint8_t OLED_UI_LOGOTEXT64[];
+extern const uint8_t OLED_UI_LOGOGithub[];
+extern const uint8_t Image_alipay_QR_Code[];
+extern const uint8_t OLED_UI_SettingsLogo[];
+extern const uint8_t Sherry[];
+extern const uint8_t My_WeChat[];
+extern const uint8_t Monitor_Station[];
+extern const uint8_t My_Settings[];
+extern const uint8_t My_Image_more[];
+/*按照上面的格式，在这个位置加入新的图像数据声明*/
+//...
+
+#endif
+
