@@ -10,9 +10,9 @@
 /* ======================== 头文件包含 ======================== */
 #include "task_sched.h"
 #include "stdbool.h"
-#include "dht11_drv.h"
+#include "dht11.h"
 #include "system_config.h"
-#include "bsp_alarm.h"
+#include "alarm.h"
 #include "sensors_data.h"
 #include "key.h"
 

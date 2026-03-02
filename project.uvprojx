@@ -312,7 +312,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>4</Optim>
+            <Optim>1</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -337,7 +337,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\BSP\stm32f103c8t6_minidev;.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\Middlewares\Utils\buffer;.\Middlewares\Utils\crypto;.\Middlewares\Utils\debug;.\Middlewares\Protocols\mqtt;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\Drivers\STM32F10x_StdPeriph_Driver;.\App\task;.\App\system;.\App\sensors;.\App\input;.\App\ui\ui_basic;.\App\ui\ui_basic\Fonts</IncludePath>
+              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -429,107 +429,322 @@
           </Files>
         </Group>
         <Group>
-          <GroupName>BSP</GroupName>
+          <GroupName>Library</GroupName>
           <Files>
             <File>
-              <FileName>bsp_oled.c</FileName>
+              <FileName>misc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_oled.c</FilePath>
+              <FilePath>.\Library\misc.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_oled.h</FileName>
+              <FileName>misc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_oled.h</FilePath>
+              <FilePath>.\Library\misc.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_usart.c</FileName>
+              <FileName>stm32f10x_adc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_usart.c</FilePath>
+              <FilePath>.\Library\stm32f10x_adc.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_usart.h</FileName>
+              <FileName>stm32f10x_adc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_usart.h</FilePath>
+              <FilePath>.\Library\stm32f10x_adc.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_delay.c</FileName>
+              <FileName>stm32f10x_bkp.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_delay.c</FilePath>
+              <FilePath>.\Library\stm32f10x_bkp.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_delay.h</FileName>
+              <FileName>stm32f10x_bkp.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_delay.h</FilePath>
+              <FilePath>.\Library\stm32f10x_bkp.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_flash.c</FileName>
+              <FileName>stm32f10x_can.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_flash.c</FilePath>
+              <FilePath>.\Library\stm32f10x_can.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_flash.h</FileName>
+              <FileName>stm32f10x_can.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_flash.h</FilePath>
+              <FilePath>.\Library\stm32f10x_can.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_iwdg.c</FileName>
+              <FileName>stm32f10x_cec.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_iwdg.c</FilePath>
+              <FilePath>.\Library\stm32f10x_cec.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_iwdg.h</FileName>
+              <FileName>stm32f10x_cec.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_iwdg.h</FilePath>
+              <FilePath>.\Library\stm32f10x_cec.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_rtc.c</FileName>
+              <FileName>stm32f10x_crc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_rtc.c</FilePath>
+              <FilePath>.\Library\stm32f10x_crc.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_rtc.h</FileName>
+              <FileName>stm32f10x_crc.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_rtc.h</FilePath>
+              <FilePath>.\Library\stm32f10x_crc.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_timer.c</FileName>
+              <FileName>stm32f10x_dac.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_timer.c</FilePath>
+              <FilePath>.\Library\stm32f10x_dac.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_timer.h</FileName>
+              <FileName>stm32f10x_dac.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_timer.h</FilePath>
+              <FilePath>.\Library\stm32f10x_dac.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_alarm.c</FileName>
+              <FileName>stm32f10x_dbgmcu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_alarm.c</FilePath>
+              <FilePath>.\Library\stm32f10x_dbgmcu.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_alarm.h</FileName>
+              <FileName>stm32f10x_dbgmcu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_alarm.h</FilePath>
+              <FilePath>.\Library\stm32f10x_dbgmcu.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_input.c</FileName>
+              <FileName>stm32f10x_dma.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_input.c</FilePath>
+              <FilePath>.\Library\stm32f10x_dma.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_input.h</FileName>
+              <FileName>stm32f10x_dma.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_input.h</FilePath>
+              <FilePath>.\Library\stm32f10x_dma.h</FilePath>
             </File>
             <File>
-              <FileName>bsp_i2c.c</FileName>
+              <FileName>stm32f10x_exti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_i2c.c</FilePath>
+              <FilePath>.\Library\stm32f10x_exti.c</FilePath>
             </File>
             <File>
-              <FileName>bsp_i2c.h</FileName>
+              <FileName>stm32f10x_exti.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\BSP\stm32f103c8t6_minidev\bsp_i2c.h</FilePath>
+              <FilePath>.\Library\stm32f10x_exti.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_flash.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_flash.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_fsmc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_fsmc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_fsmc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_fsmc.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_gpio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_gpio.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_gpio.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_gpio.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_i2c.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_i2c.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_iwdg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_iwdg.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_iwdg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_iwdg.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_pwr.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_pwr.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_pwr.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_pwr.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_rcc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_rcc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_rcc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_rcc.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_rtc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_rtc.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_sdio.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_sdio.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_sdio.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_sdio.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_spi.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_spi.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_tim.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_tim.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_tim.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_usart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_usart.h</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_wwdg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Library\stm32f10x_wwdg.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_wwdg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Library\stm32f10x_wwdg.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>System</GroupName>
+          <Files>
+            <File>
+              <FileName>alarm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\alarm.c</FilePath>
+            </File>
+            <File>
+              <FileName>alarm.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\alarm.h</FilePath>
+            </File>
+            <File>
+              <FileName>delay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\delay.c</FilePath>
+            </File>
+            <File>
+              <FileName>delay.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\delay.h</FilePath>
+            </File>
+            <File>
+              <FileName>flash.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\flash.c</FilePath>
+            </File>
+            <File>
+              <FileName>flash.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\flash.h</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\i2c.c</FilePath>
+            </File>
+            <File>
+              <FileName>i2c.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\i2c.h</FilePath>
+            </File>
+            <File>
+              <FileName>iwdg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\iwdg.c</FilePath>
+            </File>
+            <File>
+              <FileName>iwdg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\iwdg.h</FilePath>
+            </File>
+            <File>
+              <FileName>rtc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\rtc.c</FilePath>
+            </File>
+            <File>
+              <FileName>rtc.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\rtc.h</FilePath>
+            </File>
+            <File>
+              <FileName>timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\timer.h</FilePath>
+            </File>
+            <File>
+              <FileName>usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>usart.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\usart.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -537,275 +752,135 @@
           <GroupName>Drivers</GroupName>
           <Files>
             <File>
-              <FileName>dht11_drv.c</FileName>
+              <FileName>dht11.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\Sensors\dht11_drv.c</FilePath>
+              <FilePath>.\Drivers\Sensors\dht11.c</FilePath>
             </File>
             <File>
-              <FileName>dht11_drv.h</FileName>
+              <FileName>dht11.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\Sensors\dht11_drv.h</FilePath>
+              <FilePath>.\Drivers\Sensors\dht11.h</FilePath>
             </File>
             <File>
-              <FileName>misc.c</FileName>
+              <FileName>key.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\misc.c</FilePath>
+              <FilePath>.\Drivers\Input\key.c</FilePath>
             </File>
             <File>
-              <FileName>misc.h</FileName>
+              <FileName>key.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\misc.h</FilePath>
+              <FilePath>.\Drivers\Input\key.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_adc.c</FileName>
+              <FileName>OLED_Fonts.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_adc.c</FilePath>
+              <FilePath>.\Drivers\Display\Fonts\OLED_Fonts.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_adc.h</FileName>
+              <FileName>OLED_Fonts.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_adc.h</FilePath>
+              <FilePath>.\Drivers\Display\Fonts\OLED_Fonts.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_bkp.c</FileName>
+              <FileName>OLED.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_bkp.c</FilePath>
+              <FilePath>.\Drivers\Display\OLED.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_bkp.h</FileName>
+              <FileName>OLED.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_bkp.h</FilePath>
+              <FilePath>.\Drivers\Display\OLED.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_can.c</FileName>
+              <FileName>rotary_encoder.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_can.c</FilePath>
+              <FilePath>.\Drivers\Input\rotary_encoder.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_can.h</FileName>
+              <FileName>rotary_encoder.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_can.h</FilePath>
+              <FilePath>.\Drivers\Input\rotary_encoder.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_cec.c</FileName>
+              <FileName>LED.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_cec.c</FilePath>
+              <FilePath>.\Drivers\LED\LED.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_cec.h</FileName>
+              <FileName>LED.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_cec.h</FilePath>
+              <FilePath>.\Drivers\LED\LED.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_crc.c</FileName>
+              <FileName>RP.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_crc.c</FilePath>
+              <FilePath>.\Drivers\Input\RP.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_crc.h</FileName>
+              <FileName>RP.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_crc.h</FilePath>
+              <FilePath>.\Drivers\Input\RP.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_dac.c</FileName>
+              <FileName>Motor.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_dac.c</FilePath>
+              <FilePath>.\Drivers\Output\Motor.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_dac.h</FileName>
+              <FileName>Motor.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_dac.h</FilePath>
+              <FilePath>.\Drivers\Output\Motor.h</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_dbgmcu.c</FileName>
+              <FileName>PWM.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_dbgmcu.c</FilePath>
+              <FilePath>.\Drivers\Output\PWM.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f10x_dbgmcu.h</FileName>
+              <FileName>PWM.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_dbgmcu.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_dma.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_dma.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_dma.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_dma.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_exti.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_exti.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_exti.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_exti.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_flash.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_flash.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_flash.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_fsmc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_fsmc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_fsmc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_fsmc.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_gpio.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_gpio.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_gpio.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_gpio.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_i2c.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_i2c.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_i2c.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_i2c.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_iwdg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_iwdg.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_iwdg.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_iwdg.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_pwr.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_pwr.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_pwr.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_pwr.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_rcc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_rcc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_rcc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_rcc.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_rtc.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_rtc.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_rtc.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_rtc.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_sdio.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_sdio.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_sdio.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_sdio.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_spi.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_spi.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_spi.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_spi.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_tim.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_tim.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_tim.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_tim.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_usart.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_usart.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_usart.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_usart.h</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_wwdg.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_wwdg.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_wwdg.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Drivers\STM32F10x_StdPeriph_Driver\stm32f10x_wwdg.h</FilePath>
+              <FilePath>.\Drivers\Output\PWM.h</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>Middlewares</GroupName>
+          <GroupName>Utils</GroupName>
           <Files>
             <File>
               <FileName>cbuf_slot.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Middlewares\Utils\buffer\cbuf_slot.c</FilePath>
+              <FilePath>.\Utils\buffer\cbuf_slot.c</FilePath>
             </File>
             <File>
               <FileName>cbuf_slot.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Middlewares\Utils\buffer\cbuf_slot.h</FilePath>
+              <FilePath>.\Utils\buffer\cbuf_slot.h</FilePath>
             </File>
             <File>
               <FileName>my_assert.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Middlewares\Utils\debug\my_assert.c</FilePath>
+              <FilePath>.\Utils\debug\my_assert.c</FilePath>
             </File>
             <File>
               <FileName>my_assert.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Middlewares\Utils\debug\my_assert.h</FilePath>
+              <FilePath>.\Utils\debug\my_assert.h</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>APP</GroupName>
           <Files>
+            <File>
+              <FileName>System_Init.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\App\system\System_Init.c</FilePath>
+            </File>
+            <File>
+              <FileName>System_Init.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\App\system\System_Init.h</FilePath>
+            </File>
             <File>
               <FileName>task_sched.c</FileName>
               <FileType>1</FileType>
@@ -847,29 +922,24 @@
               <FilePath>.\App\log\error_warning_log.h</FilePath>
             </File>
             <File>
-              <FileName>System_Init.c</FileName>
+              <FileName>menu.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\App\system\System_Init.c</FilePath>
+              <FilePath>.\App\ui\ui_framework\menu.c</FilePath>
             </File>
             <File>
-              <FileName>System_Init.h</FileName>
+              <FileName>menu.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\App\system\System_Init.h</FilePath>
+              <FilePath>.\App\ui\ui_framework\menu.h</FilePath>
             </File>
             <File>
-              <FileName>my_oled_menu.c</FileName>
+              <FileName>menu_data.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\App\ui\ui_framework\my_oled_menu.c</FilePath>
+              <FilePath>.\App\ui\ui_conten\menu_data.c</FilePath>
             </File>
             <File>
-              <FileName>my_oled_menu.h</FileName>
+              <FileName>menu_data.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\App\ui\ui_framework\my_oled_menu.h</FilePath>
-            </File>
-            <File>
-              <FileName>menu_core_types.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\App\ui\ui_framework\menu_core_types.h</FilePath>
+              <FilePath>.\App\ui\ui_conten\menu_data.h</FilePath>
             </File>
             <File>
               <FileName>menu_callbacks.c</FileName>
@@ -882,44 +952,9 @@
               <FilePath>.\App\ui\ui_framework\menu_callbacks.h</FilePath>
             </File>
             <File>
-              <FileName>my_menu_data.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\App\ui\ui_conten\my_menu_data.c</FilePath>
-            </File>
-            <File>
-              <FileName>my_menu_data.h</FileName>
+              <FileName>menu_core_types.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\App\ui\ui_conten\my_menu_data.h</FilePath>
-            </File>
-            <File>
-              <FileName>key.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\App\input\key.c</FilePath>
-            </File>
-            <File>
-              <FileName>key.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\App\input\key.h</FilePath>
-            </File>
-            <File>
-              <FileName>OLED_Fonts.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\App\ui\ui_basic\Fonts\OLED_Fonts.c</FilePath>
-            </File>
-            <File>
-              <FileName>OLED_Fonts.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\App\ui\ui_basic\Fonts\OLED_Fonts.h</FilePath>
-            </File>
-            <File>
-              <FileName>OLED.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\App\ui\ui_basic\OLED.c</FilePath>
-            </File>
-            <File>
-              <FileName>OLED.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\App\ui\ui_basic\OLED.h</FilePath>
+              <FilePath>.\App\ui\ui_framework\menu_core_types.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -1,7 +1,7 @@
 #ifndef ERROR_WARNING_LOG_H_
 #define ERROR_WARNING_LOG_H_
 #include "stm32f10x.h"                  // Device header
-#include "bsp_rtc.h"
+#include "rtc.h"
 #include "storage.h"
 #include "string.h"
 //#define ERROR_TIME_ARRAY_SIZE 		3//(sizeof(ErrorTime)/sizeof(ErrorTime[0]))

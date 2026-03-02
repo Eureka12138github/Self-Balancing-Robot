@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
+#include "OLED.h"
 /*============================================================================
  *                          核心类型定义
  *============================================================================*/
@@ -41,9 +41,19 @@ typedef enum {
     MENU_ITEM_BACK = 1,       /**< 返回上级菜单项 */
 } MenuItemType;
 
+
+
 /*============================================================================
  *                          结构体定义
  *============================================================================*/
+
+typedef struct {
+    int16_t min;      // 最小值
+    int16_t max;      // 最大值
+    int16_t step;     // 步进（通常为正，如 1, 5, 10）
+} MenuEditConfig;
+
+
 
 /**
  * @brief 菜单项结构体
@@ -56,10 +66,18 @@ typedef struct MyMenuItem {
     struct MyMenuPage* submenu;          /**< 子菜单页面指针(用于页面跳转，优先级高于回调函数) */
     uint16_t* u16_Value;                 /**< 关联的16位数值变量指针 */
     MenuItemType item_type;              /**< 菜单项类型(普通/返回等) */
-    
+ 
+    // 👇 新增：编辑配置（若非 NULL，则此项可编辑）
+    MenuEditConfig* edit_config;         // 指向编辑参数（min/max/step）
+    bool is_editing;                     // 当前是否处于编辑状态（运行时状态）
+
+    char display_cache[MAX_STRING_LENGTH];  // 缓存最终显示字符串，如 "Speed: 150"
+    uint16_t cache_value;                   // 上次缓存的数值
+    bool cache_valid;                       // 缓存是否有效
+	
     // 滚动相关字段
     int16_t scroll_offset;               /**< 水平滚动偏移量(像素) */
-    uint16_t text_width;                 /**< 文本宽度缓存(像素) */
+    int16_t text_width;                 /**< 文本宽度缓存(像素) */
     bool is_scrolling;                   /**< 滚动状态标志 */
 } MyMenuItem;
 
@@ -76,10 +94,12 @@ typedef struct MyMenuPage {
     MyMenuID max_visible;                /**< 最大可见项数 */
     MyMenuID slot;                       /**< 当前光标槽位(0到max_visible-1) */
     MyMenuID ItemNum;                    /**< 菜单项总数 */
-    
     // 页面级滚动控制
     uint32_t last_scroll_time;           /**< 上次滚动更新时间戳 */
     uint16_t scroll_delay;               /**< 滚动动画更新间隔(毫秒) */
+	
+    uint32_t last_encoder_time;  // 上次编码器触发时间
+    uint8_t  encoder_accel;      // 当前加速等级（1=慢, 2=中, 3=快...）    	
 } MyMenuPage;
 
 #endif // MENU_CORE_TYPES_H

@@ -11,9 +11,13 @@
  *   VCC → 3.3V
  *   SCL → PB8
  *   SDA → PB9
+ 
+
+ * DHT11接线：
+ *	DATA → GPIO_Pin_12
  */
 
-#include "my_oled_menu.h"
+#include "menu.h"
 #include "task_sched.h"
 #include "System_Init.h"
 
@@ -25,11 +29,15 @@ int main(void)
 {
 
     /* ===== 系统初始化 ===== */
-    Initialize_System();  
+    Initialize_System();
 
     /* ===== 主循环 ===== */
     while (1)
     {
+//		g_rp_value1 = RP_GetValue(1);
+//		g_rp_value2 = RP_GetValue(2);
+//		g_rp_value3 = RP_GetValue(3);
+//		g_rp_value4 = RP_GetValue(4);
         TaskHandler();                // 执行周期性任务（如传感器读取、按键扫描等）
         MyOLED_UI_MainLoop();         // 刷新 UI 并处理按键事件
         IWDG_ReloadCounter();         // 喂狗（必须在主循环中定期调用）

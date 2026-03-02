@@ -8,6 +8,6 @@ void Test_Callback_2(void);
 void Test_Callback_3(void);
 void Test_Callback_4(void);
 extern u16 g_simulate_sensor_data;
-
+extern uint16_t RP_1;
 
 #endif

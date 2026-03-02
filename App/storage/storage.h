@@ -2,7 +2,7 @@
 #define STORAGE_H
 
 #include "stm32f10x.h"
-#include "bsp_flash.h"
+#include "flash.h"
 
 /**
  * @brief 持久化存储缓冲区（定义在 storage.c 中）

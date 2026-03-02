@@ -17,7 +17,7 @@
 #ifndef DEBUG_CONFIG_H
 #define DEBUG_CONFIG_H
 
-#include "bsp_usart.h"  // 确保 Serial_Printf 可用
+#include "usart.h"  // 确保 Serial_Printf 可用
 
 /* ============================================================================ */
 /*                     【配置区】按需启用调试模块                                */
