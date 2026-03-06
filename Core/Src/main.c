@@ -14,13 +14,27 @@
  
  * 电机驱动 接线说明：
  *   PWMA → PA0
- *   PA8 → AIN1
- *   PA9 → AIN2
+ *   PB13 → AIN1
+ *   PB12 → AIN2
  *   STBY → 3.3V
+ 
+ *   PWMB → PA1
+ *   PB15 → BIN1
+ *   PB14 → BIN2
+
+ *   E1A → PA7
+ *   E1B → PA6
+ *   E2A → PB6  
+ *   E2B → PB7
+ 
  
  * 霍尔编码器输出：
  *	E1A → PA6
  * 	E1B → PA7
+ 
+ * MPU6050：
+ *	SDA → PB11
+ * 	SCL → PB10 
  
  * 旋转编码器：
  * 	A → PB0
@@ -37,13 +51,16 @@
 #include "menu.h"
 #include "task_sched.h"
 #include "System_Init.h"
-
+#include <math.h>
 
 /**
  * @brief 主函数入口
  */
 int16_t AX,AY,AZ,GX,GY,GZ;
 int16_t timer_count;
+float angleAcc;
+float angleGyro;
+float angle;
 int main(void)
 {
     /* ===== 系统初始化 ===== */
@@ -63,10 +80,12 @@ int main(void)
             // 更新时间戳（关键！）
             last_print_time = current_time;
 
-            Serial_Printf(USART_DEBUG, "%d,%d,%d,%d,%d,%d\r\n", AX, AY, AZ, GX, GY, GZ);
+//            Serial_Printf(USART_DEBUG, "%d,%d,%d,%d,%d,%d\r\n", AX, AY, AZ, GX, GY, GZ);
         }
+//				  Serial_Printf(USART_DEBUG, "%d,%d,%d,%d,%d,%d\r\n", AX, AY, AZ, GX, GY, GZ);
+				Serial_Printf(USART_DEBUG, "%f,%f\r\n", angleAcc,angle);
 
-
+				GY -= 48;
 				TaskHandler();                // 如按键扫描、状态机等
         MyOLED_UI_MainLoop();         // UI 刷新（通常也需要非阻塞设计）
         IWDG_ReloadCounter();         // 喂狗（必须高频调用！）
@@ -81,8 +100,12 @@ void TIM1_UP_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM1, TIM_IT_Update) != RESET)
     {
-				MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
-        TaskSchedule(); 
+			MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
+      angleAcc = -atan2(AX,AZ) / 3.14159 * 180;  
+			angleGyro = angle + GY / 32768.0 * 2000*0.001;//满量程下正负2000°/s，这里是在进行缩放，需要看MPU6050手册才可理解
+			float alpha = 0.001;
+			angle = alpha * angleAcc + (1 - alpha) * angleGyro;//这里是互补滤波，基于acc抑制gyro的零漂
+			TaskSchedule(); 
 		TIM_ClearITPendingBit(TIM1, TIM_IT_Update) ;
     }
 }
