@@ -22,8 +22,8 @@
 // === 【用户配置区】—— 修改以下宏即可适配不同引脚或端口 =========================
 // ==============================================================================
 
-#define LED_GPIO_PORT        GPIOA          // LED 所在的 GPIO 端口（如 GPIOA, GPIOB...）
-#define LED1_PIN             GPIO_Pin_0     // LED1 连接的引脚（如 GPIO_Pin_0 表示 PA0）
+#define LED_GPIO_PORT        GPIOC          // LED 所在的 GPIO 端口（如 GPIOA, GPIOB...）
+#define LED1_PIN             GPIO_Pin_13     // LED1 连接的引脚（如 GPIO_Pin_0 表示 PA0）
 #define LED2_PIN             GPIO_Pin_1     // LED2 连接的引脚（如 GPIO_Pin_1 表示 PA1）
 
 // 自动匹配 RCC 时钟使能位（必须与 LED_GPIO_PORT 一致）

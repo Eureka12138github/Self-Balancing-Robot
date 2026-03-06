@@ -1,43 +1,10 @@
 #ifndef __PWM_H
 #define __PWM_H
 
-#include "stm32f10x.h"
-
-/**
- ******************************************************************************
- * @file    pwm.h
- * @brief   PWM 输出驱动（基于 STM32F10x 标准外设库）
- *
- * @note    【硬件连接说明】
- *          本驱动使用定时器的默认引脚映射（无重映射）。
- *          默认配置：
- *            - 定时器：TIM2
- *            - 通道：CH1（对应 TIM_OC1 / CCR1）
- *            - 引脚：PA0（TIM2_CH1 的默认引脚）
- *          所有硬件资源通过宏定义集中管理，修改即可适配其他组合。
- ******************************************************************************
- */
-
-// =============================================================================
-// 【用户配置区】—— 修改以下宏即可适配不同引脚/定时器
-// ⚠️ 重要：所选引脚必须与【通道1】匹配！
-//         例如：TIM2_CH1 → PA0, TIM3_CH1 → PA6, TIM4_CH1 → PB6
-//         若需使用其他通道（如 CH2），请同步修改 pwm.c 中的初始化函数！
-// =============================================================================
-
-// 定时器选择（必须支持 PWM 输出）
-#define PWM_TIMER               TIM2 
-#define PWM_TIMER_RCC           RCC_APB1Periph_TIM2     // TIM2/TIM3/TIM4 属于 APB1，TIM1 属于 APB2
-
-// PWM 输出引脚配置（必须与所选定时器通道的默认引脚一致）
-#define PWM_GPIO_PORT           GPIOA
-#define PWM_PIN                 GPIO_Pin_0              // TIM2_CH1 默认引脚 = PA0
-
-//GPIO 时钟
-#define PWM_GPIO_RCC        RCC_APB2Periph_GPIOA
+#include <stdint.h>
 
 // PWM 波形参数
-#define PWM_FREQ_HZ             1000                    // 目标频率：1 kHz
+#define PWM_FREQ_HZ             16000                    // 目标频率：2 kHz
 #define PWM_RESOLUTION          100                     // 分辨率（ARR + 1），即 1% 步进
 
 // =============================================================================
@@ -46,5 +13,6 @@
 
 void PWM_Init(void);
 void PWM_SetCompare1(uint16_t Compare);  // 设置占空比，范围：0 ~ PWM_RESOLUTION
+void PWM_SetCompare2(uint16_t Compare);
 
 #endif /* __PWM_H */

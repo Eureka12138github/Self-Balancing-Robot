@@ -337,7 +337,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output</IncludePath>
+              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output;.\Drivers\IMU</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -746,6 +746,16 @@
               <FileType>5</FileType>
               <FilePath>.\System\stm32f103c8t6_minidev\usart.h</FilePath>
             </File>
+            <File>
+              <FileName>MyI2C.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\MyI2C.c</FilePath>
+            </File>
+            <File>
+              <FileName>MyI2C.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\MyI2C.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -830,6 +840,31 @@
               <FileName>Motor.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Drivers\Output\Motor.h</FilePath>
+            </File>
+            <File>
+              <FileName>hall_encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Drivers\Input\hall_encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>hall_encoder.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Drivers\Input\hall_encoder.h</FilePath>
+            </File>
+            <File>
+              <FileName>MPU6050.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Drivers\IMU\MPU6050.c</FilePath>
+            </File>
+            <File>
+              <FileName>MPU6050.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Drivers\IMU\MPU6050.h</FilePath>
+            </File>
+            <File>
+              <FileName>MPU6050_Reg.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Drivers\IMU\MPU6050_Reg.h</FilePath>
             </File>
             <File>
               <FileName>PWM.c</FileName>

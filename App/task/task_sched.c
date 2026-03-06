@@ -2,31 +2,24 @@
  * @file task_sched.c
  * @brief 基于时间片轮转 + DMA事件驱动的轻量级任务调度系统
  *
- * 本模块实现两类任务：
- * 1. 定时周期任务（由 SysTick 驱动 TaskSchedule 更新）
- * 2. DMA 事件触发任务（由 DMA 中断标志驱动 DMATaskHandler 执行）
+ * 本模块实现任务：
+ * 定时周期任务（由 SysTick 驱动 TaskSchedule 更新）
  */
 
 /* ======================== 头文件包含 ======================== */
 #include "task_sched.h"
-#include "stdbool.h"
-#include "dht11.h"
 #include "system_config.h"
-#include "alarm.h"
-#include "sensors_data.h"
+#include <stdbool.h>
 #include "key.h"
-
+#include "hall_encoder.h"
 
 /* ======================== 宏定义 ======================== */
 // 任务数组大小计算
 #define TASK_NUM_MAX        (sizeof(TaskComps) / sizeof(TaskComps[0]))  ///< 定时任务数量
 
 // 定时任务周期（单位：ms）
-#define DHT11_READ_INTERVAL_MS          1000  ///< DHT11读取间隔
-#define LED_FLASH_INTERVAL_MS           500   ///< LED闪烁间隔
-#define READ_TIME_INTERVAL_MS           500   ///< RTC时间读取间隔
 #define KEY_SCAN_INTERVEL_MS           20   ///< 按键扫描周期
-
+#define HALL_ENCODER_GET_INTERVEL_MS           40   ///< 霍尔编码器增量获取周期
 
 
 /* ======================== 类型定义 ======================== */
@@ -46,31 +39,20 @@ typedef struct {
 
 /* ======================== 定时任务函数 ======================== */
 
-void DHT11_Read(void) {
-    static u8 DHT11_Error_Flag = 0;
-    u16 temp = 0, humi = 0;
-    if (DHT11_Read_Data(&temp, &humi)) {
-        SensorsData_Update_Temp_Humi(&temp, &humi);
-        DHT11_Error_Flag = 0;
-    } else {
-        if (++DHT11_Error_Flag >= 5) {
-			// 暂时不处理
-        }
-    }
+void Hall_Encoder_Test(void) {
+	g_rp_value3 = Hall_Encoder_Get(ENCODER_LEFT);
+	g_rp_value4 = Hall_Encoder_Get(ENCODER_RIGHT);
+
 }
-
-
 
 
 /* ======================== 任务表定义 ======================== */
 
 /** @brief 定时任务表 */
 static TaskComps_t TaskComps[] = {
-
-    {0, DHT11_READ_INTERVAL_MS,      DHT11_READ_INTERVAL_MS,      DHT11_Read},
-	{0, KEY_SCAN_INTERVEL_MS,      KEY_SCAN_INTERVEL_MS,            Key_Scan},
 	
-//    {0, LED_FLASH_INTERVAL_MS,       LED_FLASH_INTERVAL_MS,       Led_Turn},
+	{0, KEY_SCAN_INTERVEL_MS,      KEY_SCAN_INTERVEL_MS, Key_Scan},
+	{0, HALL_ENCODER_GET_INTERVEL_MS,      HALL_ENCODER_GET_INTERVEL_MS, Hall_Encoder_Test},
 
 
 };

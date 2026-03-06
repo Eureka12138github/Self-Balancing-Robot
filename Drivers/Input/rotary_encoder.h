@@ -38,5 +38,5 @@
 ///** @} */
 
 void Encoder_Init(void);
-int16_t Encoder_Get(void);
+int8_t Encoder_Get(void);
 #endif

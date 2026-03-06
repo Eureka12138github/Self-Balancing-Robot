@@ -179,7 +179,7 @@ static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const cha
 static void InitScrollState(MyMenuItem* item) {
     if (item == NULL) return;
     
-    item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->u16_Value);
+    item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
     
     int16_t available_width = OLED_WIDTH - START_POINT_OF_TEXT_DISPLAY;
     
@@ -311,8 +311,8 @@ static void DisplayScrollingText(uint8_t x, uint8_t y, const MyMenuItem* item) {
     // 👇 关键：仅当文本与 [0, OLED_WIDTH) 区域有重叠时才绘制
     if (display_x < OLED_WIDTH && text_right_edge > 0) {
 		//新实现：长字符串流畅显示
-		if(item->u16_Value != NULL) {
-			OLED_PrintfMixArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->u16_Value);
+		if(item->int16_Value != NULL) {
+			OLED_PrintfMixArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
 		}else {
 			OLED_ShowMixStringArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,item->text,OLED_16X16_FULL, OLED_8X16_HALF);
 		}	
@@ -336,10 +336,10 @@ static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_acti
     
     uint8_t text_x = x + START_POINT_OF_TEXT_DISPLAY;
     
-    bool is_dynamic_content = (item->u16_Value != NULL);
+    bool is_dynamic_content = (item->int16_Value != NULL);
     
     if (is_dynamic_content) {
-        int16_t new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->u16_Value);
+        int16_t new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
         
         if (abs(new_width - item->text_width) >= 8) {
             item->text_width = new_width;
@@ -357,8 +357,8 @@ static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_acti
     if (item->is_scrolling) {
         DisplayScrollingText(text_x, y, item);
     } else {
-        if (item->u16_Value != NULL) {
-            OLED_PrintfMix(text_x, y, OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->u16_Value);
+        if (item->int16_Value != NULL) {
+            OLED_PrintfMix(text_x, y, OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
         } else {
             OLED_ShowMixString(text_x, y,item->text,OLED_16X16_FULL, OLED_8X16_HALF);
         }
@@ -505,7 +505,7 @@ static void MyOLED_UI_MoveDown(void) {
 void MyOLED_UI_Init(MyMenuPage* page) {
     Delay_Init();                     // 必须最先初始化（用于后续延时）
     OLED_Init();//OLED屏初始化，与数据显示有关
-    Timer2_Init();//定时2初始化，与任务调度有关	
+    Timer1_Init();//定时1初始化，与任务调度有关	
     Key_Init();
 #ifdef USE_ENCODER_INPUT
 	Encoder_Init();
@@ -524,36 +524,35 @@ void MyOLED_UI_Init(MyMenuPage* page) {
  * @brief 主循环函数
  * 
  * UI系统的核心循环，处理按键输入、更新状态并刷新显示
- * 包含帧率控制机制确保稳定的刷新频率
+ * 采用非阻塞帧率控制机制：仅在达到设定帧间隔时才执行耗时的屏幕渲染，
+ * 其余时间快速返回，确保输入响应实时性。
  * 
- * @note 应该在main函数中循环调用
+ * @note 应该在 main 函数中循环调用，调用频率应高于 SET_FRAME_INTERVAL（如 1~5ms 一次）
  */
 void MyOLED_UI_MainLoop(void) {
+    // 【始终执行】采集按键事件
     static KeyEventType s_key_events[MAX_KEYS_NUM] = {KEY_EVENT_NONE};
     Key_GetEvent(s_key_events, MAX_KEYS_NUM);
+
 #ifdef USE_ENCODER_INPUT
-	int16_t enc = Encoder_Get();
+    int16_t enc = Encoder_Get();
 #endif
-   
-    // 处理按键事件
-    if (s_key_events[2] == KEY_EVENT_CLICK || s_key_events[2] == KEY_EVENT_LONG_PRESS) {
-		MyOLED_UI_Enter();
+
+    // 【始终执行】处理按键事件
+    if (s_key_events[0] == KEY_EVENT_CLICK) {
+        MyOLED_UI_Enter();
     }
-    if (s_key_events[3] == KEY_EVENT_CLICK) {
+    if (s_key_events[1] == KEY_EVENT_CLICK) {
         MyOLED_UI_Back();
     }
-//    if (s_key_events[2] == KEY_EVENT_CLICK || s_key_events[2] == KEY_EVENT_LONG_PRESS) {
-//        MyOLED_UI_MoveUp();
-//    }
-//    if (s_key_events[3] == KEY_EVENT_CLICK || s_key_events[3] == KEY_EVENT_LONG_PRESS) {
-//        MyOLED_UI_MoveDown();
-//    }
+
 #ifdef USE_ENCODER_INPUT
+    // 【始终执行】处理编码器输入
     if (enc != 0) {
         if (IsCurrentPageValid()) {
             MyMenuItem* active_item = &g_current_page->items[g_current_page->active_id];
             
-            if (active_item->is_editing && active_item->u16_Value != NULL && active_item->edit_config != NULL) {
+            if (active_item->is_editing && active_item->int16_Value != NULL && active_item->edit_config != NULL) {
                 uint32_t now = SysTick_Get();
                 
                 // 防止系统刚启动时 dt 异常（SysTick 溢出或未初始化）
@@ -580,10 +579,10 @@ void MyOLED_UI_MainLoop(void) {
                 if (base_step <= 0) base_step = 1; // 安全兜底
 
                 // 🔧【推荐】使用非线性加速表（比线性 ×1,×2,×3 更符合直觉）
-                const uint8_t accel_table[5] = {1, 1, 5, 50, 100}; // index: 0~4
+                const uint8_t accel_table[5] = {1, 1, 5, 10, 20}; // index: 0~4
                 int32_t actual_step = base_step * accel_table[g_current_page->encoder_accel];
 
-                int32_t current_val = (int32_t)(*active_item->u16_Value);
+                int32_t current_val = (int32_t)(*active_item->int16_Value);
                 int32_t delta = (enc >= 1) ? actual_step : -actual_step;
                 int32_t new_val = current_val + delta;
                 
@@ -594,7 +593,7 @@ void MyOLED_UI_MainLoop(void) {
                     new_val = active_item->edit_config->max;
                 }
                 
-                *active_item->u16_Value = (uint16_t)new_val;
+                *active_item->int16_Value = (uint16_t)new_val;
             } else {
                 // 导航模式：上下移动
                 if (enc == 1) {
@@ -611,19 +610,19 @@ void MyOLED_UI_MainLoop(void) {
     }
 #endif
 	
-    // 统一的安全检查和错误处理
+    // 【始终执行】统一的安全检查和错误处理
     if (!IsCurrentPageValid()) {
         HandleInvalidPage();
         return;
     }
 
-    // 同步槽位与活动ID
+    // 【始终执行】同步槽位与活动ID
     SyncSlotWithActiveId();
     
-    // 独立更新水平文本滚动动画
+    // 【始终执行】更新水平文本滚动动画（基于时间，轻量）
     UpdateHorizontalTextScroll(g_current_page);
     
-    // 确保visible_start有效
+    // 【始终执行】确保 visible_start 有效
     MyMenuID actual_displayable = GetMaxVisibleItems();
     MyMenuID max_visible_start = (g_current_page->ItemNum > actual_displayable) ? 
                                (g_current_page->ItemNum - actual_displayable) : 0;
@@ -631,6 +630,19 @@ void MyOLED_UI_MainLoop(void) {
         g_current_page->visible_start = max_visible_start;
     }
 
+    // =============================================
+    // ✅ 非阻塞帧率控制：仅当达到帧间隔时才渲染
+    // =============================================
+    static uint32_t last_render_time = 0;
+    uint32_t current_time = SysTick_Get();
+    
+    if ((current_time - last_render_time) < SET_FRAME_INTERVAL) {
+        // ⏱️ 未到刷新时间，跳过渲染以避免阻塞
+        return;
+    }
+    last_render_time = current_time;
+
+    // 【仅在此处执行】
     OLED_Clear();
 
     // 显示菜单项
@@ -661,20 +673,6 @@ void MyOLED_UI_MainLoop(void) {
         DisplayMenuItem(0, line_y, item, is_active);
     }
 
-    OLED_Update();
-    
-    // 添加稳定的帧率控制
-    static uint32_t last_frame_time = 0;
-    uint32_t current_time = SysTick_Get();
-    
-    uint32_t frame_interval = SET_FRAME_INTERVAL;
-    if ((current_time - last_frame_time) >= frame_interval) {
-        last_frame_time = current_time;
-    } else {
-        uint32_t delay_needed = frame_interval - (current_time - last_frame_time);
-        if (delay_needed > 0 && delay_needed <= frame_interval) {
-            Delay_ms(delay_needed);
-        }
-        last_frame_time = SysTick_Get();
-    }
+    OLED_Update(); // 实际刷屏
 }
+

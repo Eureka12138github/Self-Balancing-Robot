@@ -6,14 +6,14 @@
 #include <stdarg.h>
 
 // ====== 用户配置区 ======
-#define SERIAL_USE_USART1   0
-#define SERIAL_USE_USART2   1
-#define SERIAL_USE_USART3   1
+#define SERIAL_USE_USART1   1
+#define SERIAL_USE_USART2   0
+#define SERIAL_USE_USART3   0
 
 #define TX_BUF_SIZE         512
 #define RX_BUF_SIZE         512
 
-#define USART_DEBUG         USART3   
+#define USART_DEBUG         USART1 
 // =======================
 
 // 函数声明（带条件编译）
@@ -42,9 +42,6 @@ int Serial_ReadByte(USART_TypeDef* USARTx);
 size_t Serial_ReadArray(USART_TypeDef* USARTx, uint8_t* buf, size_t len);
 size_t Serial_GetRxCount(USART_TypeDef* USARTx);
 
-//temp
-void Serial_Printf_temp(USART_TypeDef *USARTx, char *format, ...);
-void Debug_Usart_Init(u32 baud);
 
 #endif
 

@@ -24,6 +24,8 @@
 /** 编码器累计增量值（正转+，反转-） */
 volatile int16_t Encoder_Count = 0;
 
+// 滤波状态变量（用于抑制反向毛刺）
+
 /**
  * @brief 初始化旋转编码器接口
  *
@@ -55,77 +57,79 @@ void Encoder_Init(void)
     EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
     EXTI_Init(&EXTI_InitStructure);
 
-    // 5. 配置 NVIC 中断优先级（从 bsp_config.h 获取）
+    // 5. 配置 NVIC 中断优先级
     NVIC_InitTypeDef NVIC_InitStructure;
     
-    // A 相中断通道
+    // A 相中断
     NVIC_InitStructure.NVIC_IRQChannel = ENCODER_IRQ_A;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = ENCODER_EXTIA_PRIO;
     NVIC_InitStructure.NVIC_IRQChannelSubPriority = SUB_PRIO_UNUSED;
     NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 
-    // B 相中断通道
+    // B 相中断
     NVIC_InitStructure.NVIC_IRQChannel = ENCODER_IRQ_B;
     NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = ENCODER_EXTIB_PRIO;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = SUB_PRIO_UNUSED + 1;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&NVIC_InitStructure);
 }
 
 /**
- * @brief 获取并清零当前编码器增量值
- * @return int16_t 自上次调用以来的计数变化（通常为 +1 / -1）
+ * @brief 获取并清零当前编码器增量值（带方向滤波）
+ * @return int16_t 自上次调用以来的有效增量（通常为 +1 或 -1）
+ *
+ * 📌 滤波策略：
+ *   - 仅当连续 ≥2 次同方向才输出
+ *   - 返回值强制为 ±1（避免 UI 跳跃）
  */
-int16_t Encoder_Get(void)
+static volatile int8_t last_direction = 0;
+static volatile uint8_t direction_count = 0;
+
+/**
+ * @brief 获取编码器增量（带方向一致性滤波）
+ * @return int16_t 过滤后的增量（通常为 -1, 0, +1；快速旋转可能为 ±2 等）
+ * @problem “即使不反转方向也存在滞后”现象，在面对 中间毛刺（如 -1, -1, +1, -1, -1）时产生的“方向误判 + 状态重置”所导致的延迟响应。          
+ */
+int8_t Encoder_Get(void)
 {
-    int16_t temp = Encoder_Count;
+    // 1. 原子读取并清零原始计数
+    __disable_irq();
+    int16_t raw = Encoder_Count;
     Encoder_Count = 0;
-    return temp;
+    __enable_irq();
+
+    if (raw == 0) {
+        return 0;
+    }
+
+    // 2. 判断主方向
+    int8_t current_dir = (raw > 0) ? 1 : -1;
+
+    // 3. 方向一致性滤波
+    if (current_dir == last_direction) {
+        direction_count++;
+    } else {
+        last_direction = current_dir;
+        direction_count = 1;
+    }
+
+    // 4. 只有连续 ≥2 次同方向才输出（可调）
+    if (direction_count >= 2) {
+        return raw > 0 ? 1 : -1;
+    } else {
+        return 0; // 丢弃孤立噪声脉冲
+    }
 }
 
 // ----------------------------------------------------------------------------
-// 中断服务函数模板（根据实际引脚选择启用其中一个或两个）
+// 中断服务函数（独立中断：适用于 EXTI0 / EXTI1）
 // ----------------------------------------------------------------------------
 
-// 共用中断示例：适用于 Pin5~9（EXTI9_5_IRQn）
-//void EXTI9_5_IRQHandler(void)
-//{
-//    if (EXTI_GetITStatus(ENCODER_A_EXTI_LINE)) {
-//        if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, ENCODER_PIN_B) == Bit_RESET) {
-//            Encoder_Count--;
-//        }
-//        EXTI_ClearITPendingBit(ENCODER_A_EXTI_LINE);
-//    }
-//    
-//    if (EXTI_GetITStatus(ENCODER_B_EXTI_LINE)) {
-//        if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, ENCODER_PIN_A) == Bit_RESET) {
-//            Encoder_Count++;
-//        }
-//        EXTI_ClearITPendingBit(ENCODER_B_EXTI_LINE);
-//    }
-//}
-
-// 共用中断示例：适用于 Pin10~15（EXTI15_10_IRQn）
-//void EXTI15_10_IRQHandler(void)
-//{
-//    if (EXTI_GetITStatus(ENCODER_A_EXTI_LINE)) {
-//        if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, ENCODER_PIN_B) == Bit_RESET) {
-//            Encoder_Count--;
-//        }
-//        EXTI_ClearITPendingBit(ENCODER_A_EXTI_LINE);
-//    }
-//    
-//    if (EXTI_GetITStatus(ENCODER_B_EXTI_LINE)) {
-//        if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, ENCODER_PIN_A) == Bit_RESET) {
-//            Encoder_Count++;
-//        }
-//        EXTI_ClearITPendingBit(ENCODER_B_EXTI_LINE);
-//    }
-//}
-
-// 独立中断示例：适用于 Pin0（A相）和 Pin1（B相）
 void EXTI0_IRQHandler(void)
 {
     if (EXTI_GetITStatus(ENCODER_A_EXTI_LINE) != RESET) {
+        // A 相下降沿：若 B 为低 → 反转
         if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, ENCODER_PIN_B) == Bit_RESET) {
             Encoder_Count--;
         }
@@ -136,6 +140,7 @@ void EXTI0_IRQHandler(void)
 void EXTI1_IRQHandler(void)
 {
     if (EXTI_GetITStatus(ENCODER_B_EXTI_LINE) != RESET) {
+        // B 相下降沿：若 A 为低 → 正转
         if (GPIO_ReadInputDataBit(ENCODER_GPIO_PORT, ENCODER_PIN_A) == Bit_RESET) {
             Encoder_Count++;
         }

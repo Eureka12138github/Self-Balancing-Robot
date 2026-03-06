@@ -11,7 +11,6 @@
 
 #include "menu_data.h"
 #include <stddef.h>
-#include "sensors_data.h"
 #include "menu_callbacks.h"
 #include "system_config.h"
 
@@ -51,9 +50,9 @@
  * 定义在 Flash 中，节省 RAM
  * 可根据需要定义多个不同配置
  */
-static const MenuEditConfig s_test7_edit_config = {
-    .min  = 0,      // 最小值
-    .max  = 4095,    // 最大值
+static const MenuEditConfig s_RP_edit_config = {
+    .min  = -50,      // 最小值
+    .max  = 50,    // 最大值
     .step = 1       // 每次调节步进
 };
 
@@ -61,47 +60,52 @@ static const MenuEditConfig s_test7_edit_config = {
 // ==================== 主菜单项定义 ====================
 /**
  * @brief 主菜单项数组
- * 
- * 包含系统的主要功能入口，支持多种类型的菜单项：
- * - 普通导航项：指向子菜单页面
- * - 回调执行项：执行特定功能函数
- * - 数值显示项：动态显示传感器数据
- * - 长文本项：自动启用水平滚动显示
+ *
+ * 定义主菜单页面的所有菜单项，作为系统功能的顶层入口。
+ * 本数组混合使用完整初始化与简洁初始化方式：
+ * - 第一项采用完整显式初始化，作为结构体字段用法的参考模板；
+ * - 其余普通项采用位置+指定初始化混合方式，但显式设置关键字段 `.item_type` 以确保语义明确；
+ * - 所有未显式初始化的成员（如滚动状态、编辑标志等）由编译器自动置零，符合预期行为。
+ *
+ * 支持的菜单项类型包括：
+ * - 普通导航项：通过 `.submenu` 跳转至子菜单页面；
+ * - 回调执行项：通过 `.callback` 执行特定功能（无子菜单）；
+ * - 数值显示项：通过 `.u16_Value` 动态显示变量值（本数组未使用）；
+ * - 长文本项：文本宽度超过屏幕时自动触发水平滚动（需运行时计算宽度）。
+ *
+ * ⚠️ 注意：
+ * - 数组必须以全零项 `{0}` 结尾，作为遍历终止标记；
+ * - 若新增字段到 `MyMenuItem` 结构体，请同步更新第一项的完整初始化以保持示例有效性。
  */
 MyMenuItem MainItems[] = {    
-    {"监控", NULL, &MonitorPage, NULL},           // 导航到监控子菜单
-    {"设置", NULL, &SettingsPage, NULL},          // 导航到设置子菜单
-    {"更多", NULL, &MorePage, NULL},              // 导航到更多子菜单
-    {"TEST1:%d", Test_Callback_1, NULL, &RP_1},       // 回调执行项
-    {"TEST2", Test_Callback_2, NULL, NULL},       // 回调执行项
-    {"TEST3", Test_Callback_3, NULL, NULL},       // 回调执行项
-    
-    // 长文本项示例 - 当文本超过屏幕宽度时自动滚动(长字符串后半段显示会卡顿，改问题尚未解决)
-    {"TEST4:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL}, 
-    {"TEST5:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL},
-    {"TEST6:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL},
-    
-
-    {"TEST7:%d", NULL, NULL, &g_rp_value2},
-    {"TEST8:%d", NULL, NULL, &g_rp_value3},
-    // 👇 修改 TEST9 为可编辑项（核心改动！）
+    // 【完整初始化示例】—— 明确所有字段，便于理解结构体布局与默认值
     {
-        .text        = "TEST9:%d",
-        .callback    = NULL,                      // 编辑模式下无需回调
-        .submenu     = NULL,
-        .u16_Value   = &g_rp_value1,              // 关联变量
-        .item_type   = MENU_ITEM_NORMAL,
-        .edit_config = (MenuEditConfig*)&s_test7_edit_config, // 启用编辑
-        .is_editing  = false,                     // 初始非编辑态
-        .scroll_offset = 0,
-        .text_width  = 0,
-        .is_scrolling = false
-    },	
-	
-    {"TEST10:%d", NULL, NULL, &g_rp_value4},	   
-    
-    // 数组结束标记 - 必须存在
-    {NULL, NULL, NULL, NULL}
+        .text         = "监控",               ///< 显示文本
+        .callback     = NULL,                ///< 无回调函数
+        .submenu      = &MonitorPage,        ///< 跳转至监控子菜单
+        .int16_Value    = NULL,                ///< 不关联数值变量
+        .item_type    = MENU_ITEM_NORMAL,    ///< 普通菜单项
+        .edit_config  = NULL,                ///< 不可编辑
+        .is_editing   = false,               ///< 初始非编辑状态
+        .scroll_offset= 0,                   ///< 滚动偏移初始为0
+        .text_width   = 0,                   ///< 文本宽度由运行时计算
+        .is_scrolling = false                ///< 初始无滚动动画
+    },
+
+    // 普通导航项：简洁写法，但显式指定 item_type 保证语义安全
+    {"设置", NULL, &SettingsPage, NULL, MENU_ITEM_NORMAL},          ///< 导航到设置子菜单
+    {"更多", NULL, &MorePage, NULL, MENU_ITEM_NORMAL},              ///< 导航到更多子菜单
+
+    // 回调执行项：点击后直接执行函数，不跳转页面
+    {"TEST1", Test_Callback_1, NULL, NULL, MENU_ITEM_NORMAL},       ///< 执行测试回调函数
+
+    // 长文本项：文本超宽时自动启用水平滚动（滚动逻辑在渲染时处理）
+    {"TEST2:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL, MENU_ITEM_NORMAL},
+    {"TEST3:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL, MENU_ITEM_NORMAL},
+    {"TEST4:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL, MENU_ITEM_NORMAL},
+
+    // 数组结束标记：必须存在，用于菜单遍历时判断终止条件
+    {0}
 };
 
 // ==================== 设置子菜单项定义 ====================
@@ -112,15 +116,14 @@ MyMenuItem MainItems[] = {
  * 注意最后一项为返回按钮的特殊配置
  */
 MyMenuItem SettingsItems[] = {
-    {"Setting_1", NULL, NULL, NULL},              // 普通设置项
-    {"Setting_1", NULL, NULL, NULL},              // 普通设置项
-    {"Setting_1", NULL, NULL, NULL},              // 普通设置项
-    
+    {"Setting_1", NULL, NULL,NULL, MENU_ITEM_NORMAL},              // 普通设置项
+    {"Setting_2", NULL, NULL, NULL,MENU_ITEM_NORMAL},              // 普通设置项
+    {"Setting_3", NULL, NULL, NULL,MENU_ITEM_NORMAL},              // 普通设置项	
     // 返回项配置 - 特殊类型MENU_ITEM_BACK
     {"[返回]", NULL, NULL, NULL, MENU_ITEM_BACK},  
     
     // 数组结束标记
-    {NULL, NULL, NULL, NULL}
+    {0}
 };
 
 // ==================== 监控子菜单项定义 ====================
@@ -131,44 +134,39 @@ MyMenuItem SettingsItems[] = {
  * 数值项会自动显示关联变量的当前值
  */
 MyMenuItem MonitorItems[] = {
-    // 数值显示项 - 显示温度数据
-    {"温度:%d `C", NULL, NULL, &g_sensor_data.temp},
-    
-    // 数值显示项 - 显示湿度数据  
-    {"湿度:%d %%RH", NULL, NULL, &g_sensor_data.humi},
 
     {
         .text        = "RP1:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
-        .u16_Value   = &g_rp_value1,              // 关联变量
+        .int16_Value   = &g_rp_value1,              // 关联变量
         .item_type   = MENU_ITEM_NORMAL,
-        .edit_config = (MenuEditConfig*)&s_test7_edit_config, // 启用编辑
+        .edit_config = (MenuEditConfig*)&s_RP_edit_config, // 启用编辑
         .is_editing  = false,                     // 初始非编辑态
         .scroll_offset = 0,
         .text_width  = 0,
         .is_scrolling = false
     },
-  
+	
     {
         .text        = "RP2:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
-        .u16_Value   = &g_rp_value1,              // 关联变量
+        .int16_Value   = &g_rp_value2,              // 关联变量
         .item_type   = MENU_ITEM_NORMAL,
-        .edit_config = (MenuEditConfig*)&s_test7_edit_config, // 启用编辑
+        .edit_config = (MenuEditConfig*)&s_RP_edit_config, // 启用编辑
         .is_editing  = false,                     // 初始非编辑态
         .scroll_offset = 0,
         .text_width  = 0,
         .is_scrolling = false
     },
     {
-        .text        = "RP2:%d",
+        .text        = "RP3:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
-        .u16_Value   = &g_rp_value1,              // 关联变量
+        .int16_Value   = &g_rp_value3,              // 关联变量
         .item_type   = MENU_ITEM_NORMAL,
-        .edit_config = (MenuEditConfig*)&s_test7_edit_config, // 启用编辑
+        .edit_config = (MenuEditConfig*)&s_RP_edit_config, // 启用编辑
         .is_editing  = false,                     // 初始非编辑态
         .scroll_offset = 0,
         .text_width  = 0,
@@ -176,25 +174,23 @@ MyMenuItem MonitorItems[] = {
     },	
 	
     {
-        .text        = "RP2:%d",
+        .text        = "RP4:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
-        .u16_Value   = &g_rp_value1,              // 关联变量
+        .int16_Value   = &g_rp_value4,              // 关联变量
         .item_type   = MENU_ITEM_NORMAL,
-        .edit_config = (MenuEditConfig*)&s_test7_edit_config, // 启用编辑
+        .edit_config = (MenuEditConfig*)&s_RP_edit_config, // 启用编辑
         .is_editing  = false,                     // 初始非编辑态
         .scroll_offset = 0,
         .text_width  = 0,
         .is_scrolling = false
     },		
-    // 回调+数值项 - 执行函数并显示数值
-    {"XXXX-XXXX->:%d", Test_Callback_4, NULL, &g_simulate_sensor_data},
-    
+
     // 返回项
     {"[返回]", NULL, NULL, NULL, MENU_ITEM_BACK},  
     
     // 数组结束标记
-    {NULL, NULL, NULL, NULL}
+    {0}
 };
 
 // ==================== 更多子菜单项定义 ====================
@@ -204,14 +200,14 @@ MyMenuItem MonitorItems[] = {
  * 简单的信息展示菜单
  */
 MyMenuItem MoreItems[] = {
-    {"About", NULL, NULL, NULL},                  // 关于信息
-    {"Help", NULL, NULL, NULL},                   // 帮助信息
+    {"About", NULL, NULL, NULL, MENU_ITEM_NORMAL},                  // 关于信息
+    {"Help", NULL, NULL, NULL, MENU_ITEM_NORMAL},                   // 帮助信息
     
     // 返回项
     {"[返回]", NULL, NULL, NULL, MENU_ITEM_BACK},  
     
     // 数组结束标记
-    {NULL, NULL, NULL, NULL}
+    {0}
 };
 
 // ==================== 页面定义 ====================
@@ -233,7 +229,9 @@ MyMenuPage MainPage = {
     .slot = 0,                                   // 光标在第一个槽位
     .ItemNum = (sizeof(MainItems) / sizeof(MyMenuItem)) - 1,  // 自动计算项数
     .last_scroll_time = 0,                       // 滚动时间基准初始化
-    .scroll_delay = SET_SCROLL_DELAY             // 滚动动画间隔
+    .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
+	.last_encoder_time = 0,
+	.encoder_accel = 1	
 };
 
 /**
@@ -252,7 +250,9 @@ MyMenuPage SettingsPage = {
     .slot = 0,                                   // 光标在第一个槽位
     .ItemNum = (sizeof(SettingsItems) / sizeof(MyMenuItem)) - 1,  // 自动计算
     .last_scroll_time = 0,                       // 滚动时间基准初始化
-    .scroll_delay = SET_SCROLL_DELAY             // 滚动动画间隔
+    .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
+	.last_encoder_time = 0,
+	.encoder_accel = 1	
 };
 
 /**
@@ -269,7 +269,9 @@ MyMenuPage MonitorPage = {
     .slot = 0,                                   // 光标在第一个槽位
     .ItemNum = (sizeof(MonitorItems) / sizeof(MyMenuItem)) - 1,   // 自动计算
     .last_scroll_time = 0,                       // 滚动时间基准初始化
-    .scroll_delay = SET_SCROLL_DELAY             // 滚动动画间隔
+    .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
+	.last_encoder_time = 0,
+	.encoder_accel = 1
 };
 
 /**
@@ -286,5 +288,7 @@ MyMenuPage MorePage = {
     .slot = 0,                                   // 光标在第一个槽位
     .ItemNum = (sizeof(MoreItems) / sizeof(MyMenuItem)) - 1,      // 自动计算
     .last_scroll_time = 0,                       // 滚动时间基准初始化
-    .scroll_delay = SET_SCROLL_DELAY             // 滚动动画间隔
+    .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
+	.last_encoder_time = 0,
+	.encoder_accel = 1	
 };

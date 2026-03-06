@@ -2,6 +2,10 @@
 #include "system_config.h"
 #include "OLED.h"                  // Device header
 #include "OLED_Fonts.h"
+#include "delay.h"
+#include "error_warning_log.h"
+#include "rtc.h"
+#include "storage.h"
 /**
  * @brief  Initializes the Independent Watchdog (IWDG) with the specified maximum timeout time.
  * @param  MaxTime: The maximum timeout time in milliseconds.

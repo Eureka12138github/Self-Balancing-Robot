@@ -1,10 +1,7 @@
 #ifndef RTC_H
 #define RTC_H
 #include "stm32f10x.h"
-#include "usart.h"
-#include "debug_config.h"
-#include "stdbool.h"
-#include <time.h>
+#include <stdbool.h>
 typedef struct MYRTC {
 	u16 Year;
 	u8 Month;

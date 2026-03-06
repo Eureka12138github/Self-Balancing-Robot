@@ -50,7 +50,7 @@ typedef enum {
 typedef struct {
     int16_t min;      // 最小值
     int16_t max;      // 最大值
-    int16_t step;     // 步进（通常为正，如 1, 5, 10）
+    uint8_t step;     // 步进（通常为正，如 1, 5, 10）
 } MenuEditConfig;
 
 
@@ -64,16 +64,12 @@ typedef struct MyMenuItem {
     const char* text;                    /**< 显示文本内容(支持格式化字符串) */
     void (*callback)(void);              /**< 回调函数指针(确认键执行) */
     struct MyMenuPage* submenu;          /**< 子菜单页面指针(用于页面跳转，优先级高于回调函数) */
-    uint16_t* u16_Value;                 /**< 关联的16位数值变量指针 */
+    int16_t* int16_Value;                 /**< 关联的16位数值变量指针 */
     MenuItemType item_type;              /**< 菜单项类型(普通/返回等) */
  
-    // 👇 新增：编辑配置（若非 NULL，则此项可编辑）
+    // 编辑配置
     MenuEditConfig* edit_config;         // 指向编辑参数（min/max/step）
     bool is_editing;                     // 当前是否处于编辑状态（运行时状态）
-
-    char display_cache[MAX_STRING_LENGTH];  // 缓存最终显示字符串，如 "Speed: 150"
-    uint16_t cache_value;                   // 上次缓存的数值
-    bool cache_valid;                       // 缓存是否有效
 	
     // 滚动相关字段
     int16_t scroll_offset;               /**< 水平滚动偏移量(像素) */

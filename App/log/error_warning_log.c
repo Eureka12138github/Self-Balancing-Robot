@@ -1,4 +1,7 @@
 #include "error_warning_log.h"
+#include "rtc.h"
+#include "storage.h"
+#include <string.h>
 /**
  * @brief 将指定索引的错误时间信息存储到 Store_Data 数组中
  * @param index 错误日志索引（0 ～ ERROR_TIME_ARRAY_SIZE-1）

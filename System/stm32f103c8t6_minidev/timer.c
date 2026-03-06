@@ -1,6 +1,48 @@
 #include "timer.h"
 #include "stm32f10x.h"                  // Device header
 #include "bsp_config.h"
+/**
+ * @brief 初始化定时器 TIM1 用于周期性中断（如按键扫描或 UI 刷新）
+ *
+ * 配置 TIM1 为向上计数模式，产生 1kHz 中断频率（周期 1ms）：
+ * - 系统时钟：72 MHz
+ * - 预分频器：7200 - 1 → 计数时钟 = 72MHz / 7200 = 10 kHz
+ * - 自动重载值：10 - 1 → 中断周期 = (10) / 10kHz = 1 ms
+ *
+ * @note TIM1 是高级定时器，挂载在 APB2 总线
+ * @warning 若需修改中断频率，请同步调整 TIM_Prescaler 和 TIM_Period
+ */
+void Timer1_Init(void)
+{
+    // 1. 使能 TIM1 时钟（APB2 外设）
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+
+    // 2. 配置时基参数
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
+    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;      // 不对输入滤波时钟分频
+    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;            // 高级功能，此处无需重复计数
+    TIM_TimeBaseInitStructure.TIM_Period = 10 - 1;                  // 自动重载值 (ARR)
+    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up; // 向上计数模式
+    TIM_TimeBaseInitStructure.TIM_Prescaler = 7200 - 1;             // 预分频值 (PSC)
+    TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure);
+
+    // 3. 清除更新中断标志并使能中断
+    TIM_ClearFlag(TIM1, TIM_FLAG_Update);
+    TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
+
+    // 4. 配置 NVIC 中断优先级
+    NVIC_InitTypeDef NVIC_InitStructure;
+    NVIC_InitStructure.NVIC_IRQChannel = TIM1_UP_IRQn;              // TIM1 更新中断通道
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = TIMER1_PRIO;       // 抢占优先级
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = SUB_PRIO_UNUSED;              // 子优先级
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+
+    // 5. 启动定时器
+    TIM_Cmd(TIM1, ENABLE);
+}
+
+
 void Timer2_Init(void)
 {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2,ENABLE);//tIM2是APB1总线的外设，所以要开启APB1时钟

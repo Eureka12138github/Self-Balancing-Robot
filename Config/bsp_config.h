@@ -53,10 +53,10 @@
 /** @{ */
 
 /* ---------------- 硬件引脚定义 ---------------- */
-#define KEY1_PIN        GPIO_Pin_6      /*!< 按键 1 连接至 PA6 */
-#define KEY2_PIN        GPIO_Pin_7      /*!< 按键 2 连接至 PA7 */
-#define KEY3_PIN        GPIO_Pin_12     /*!< 按键 3 连接至 PB12 */
-#define KEY4_PIN        GPIO_Pin_15     /*!< 按键 4 连接至 PB15 */
+#define KEY1_PIN        GPIO_Pin_4      /*!< 按键 1 连接至 PA6 */
+#define KEY2_PIN        GPIO_Pin_11      /*!< 按键 2 连接至 PA7 */
+#define KEY3_PIN        GPIO_Pin_0     /*!< 按键 3 连接至 PB0 */
+#define KEY4_PIN        GPIO_Pin_1     /*!< 按键 4 连接至 PB1 */
 
 /* ---------------- 按键状态读取宏 ---------------- */
 #define READ_KEY1_STATE()   GPIO_ReadInputDataBit(GPIOA, KEY1_PIN)
@@ -156,13 +156,13 @@
 
 /* 具体外设中断优先级映射 */
 /* USART */
-#define USART1_PRIO     PRE_PRIO_15
+#define USART1_PRIO     UART_DEBUG_PRIO
 #define USART2_PRIO     PRE_PRIO_15
-#define USART3_PRIO     UART_DEBUG_PRIO
+#define USART3_PRIO     PRE_PRIO_15
 
 /* TIM */
-#define TIMER1_PRIO     PRE_PRIO_15
-#define TIMER2_PRIO     GENERAL_TASK_HANDLER_PRIO
+#define TIMER1_PRIO     GENERAL_TASK_HANDLER_PRIO
+#define TIMER2_PRIO     PRE_PRIO_15
 #define TIMER3_PRIO     PRE_PRIO_15
 #define TIMER4_PRIO     PRE_PRIO_15
 

@@ -1,4 +1,6 @@
 #include "rtc.h"
+#include "debug_config.h"
+#include <time.h>
 //MYRTC Time = {
 //	.Year = 2025,
 //	.Month = 4,
