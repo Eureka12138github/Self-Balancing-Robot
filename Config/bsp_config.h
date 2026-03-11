@@ -53,16 +53,16 @@
 /** @{ */
 
 /* ---------------- 硬件引脚定义 ---------------- */
-#define KEY1_PIN        GPIO_Pin_4      /*!< 按键 1 连接至 PA6 */
-#define KEY2_PIN        GPIO_Pin_11      /*!< 按键 2 连接至 PA7 */
-#define KEY3_PIN        GPIO_Pin_0     /*!< 按键 3 连接至 PB0 */
-#define KEY4_PIN        GPIO_Pin_1     /*!< 按键 4 连接至 PB1 */
+#define KEY1_PIN        GPIO_Pin_0      /*!< 按键 1 连接至 PB0 */
+#define KEY2_PIN        GPIO_Pin_11      /*!< 按键 2 连接至 PA11 */
+#define KEY3_PIN        GPIO_Pin_5     /*!< 按键 3 连接至 PA5 */
+#define KEY4_PIN        GPIO_Pin_4     /*!< 按键 4 连接至 PA4 */
 
 /* ---------------- 按键状态读取宏 ---------------- */
-#define READ_KEY1_STATE()   GPIO_ReadInputDataBit(GPIOA, KEY1_PIN)
+#define READ_KEY1_STATE()   GPIO_ReadInputDataBit(GPIOB, KEY1_PIN)
 #define READ_KEY2_STATE()   GPIO_ReadInputDataBit(GPIOA, KEY2_PIN)
-#define READ_KEY3_STATE()   GPIO_ReadInputDataBit(GPIOB, KEY3_PIN)
-#define READ_KEY4_STATE()   GPIO_ReadInputDataBit(GPIOB, KEY4_PIN)
+#define READ_KEY3_STATE()   GPIO_ReadInputDataBit(GPIOA, KEY3_PIN)
+#define READ_KEY4_STATE()   GPIO_ReadInputDataBit(GPIOA, KEY4_PIN)
 
 /* ---------------- 时间参数（基于 20ms/tick 的定时器中断） ---------------- */
 #define DEBOUNCE_TICKS      (1U)    /*!< 消抖时间：20 ms */
@@ -161,7 +161,7 @@
 #define USART3_PRIO     PRE_PRIO_15
 
 /* TIM */
-#define TIMER1_PRIO     GENERAL_TASK_HANDLER_PRIO
+#define TIMER1_PRIO     PRE_PRIO_3
 #define TIMER2_PRIO     PRE_PRIO_15
 #define TIMER3_PRIO     PRE_PRIO_15
 #define TIMER4_PRIO     PRE_PRIO_15

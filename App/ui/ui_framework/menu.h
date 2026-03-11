@@ -26,7 +26,7 @@ extern "C" {
 #endif
 
 	
-#define USE_ENCODER_INPUT	//若使用编码器输入则取消此注释，引脚在 bsp_config 中修改
+//#define USE_ENCODER_INPUT	//若使用编码器输入则取消此注释，引脚在 bsp_config 中修改
 	
 /*============================================================================
  *                          对外接口函数声明

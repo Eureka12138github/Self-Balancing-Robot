@@ -337,7 +337,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output;.\Drivers\IMU</IncludePath>
+              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output;.\Drivers\IMU;.\Utils\PID</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -876,6 +876,16 @@
               <FileType>5</FileType>
               <FilePath>.\Drivers\Output\PWM.h</FilePath>
             </File>
+            <File>
+              <FileName>BlueSerial.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Drivers\Communication\BlueSerial.c</FilePath>
+            </File>
+            <File>
+              <FileName>BlueSerial.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Drivers\Communication\BlueSerial.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -900,6 +910,16 @@
               <FileName>my_assert.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Utils\debug\my_assert.h</FilePath>
+            </File>
+            <File>
+              <FileName>PID.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Utils\PID\PID.c</FilePath>
+            </File>
+            <File>
+              <FileName>PID.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Utils\PID\PID.h</FilePath>
             </File>
           </Files>
         </Group>

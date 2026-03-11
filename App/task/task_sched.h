@@ -4,7 +4,8 @@
 
 void TaskHandler(void);
 void TaskSchedule(void);
-void DMATaskHandler(void);
 
+
+void Balance_Control_Loop(void);
 
 #endif

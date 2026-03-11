@@ -15,8 +15,8 @@
  */
 
 #include "menu_callbacks.h"
-#include "alarm.h"
-
+#include "LED.h"
+#include "system_config.h"
 /*============================================================================
  *                          测试回调函数实现
  *============================================================================*/
@@ -31,7 +31,12 @@
  * 执行动作：调用Led_Turn()函数翻转LED状态
  */
 void Test_Callback_1(void) {
-    Led_Turn();
+		run_flag = !run_flag;
+		if(run_flag) {
+			LED1_ON();
+		}else {
+			LED1_OFF();
+		}
 }
 
 

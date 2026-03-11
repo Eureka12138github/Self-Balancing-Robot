@@ -71,8 +71,8 @@ void MPU6050_Init(void)
 	MyI2C_Init();
 	MPU6050_WriteReg(MPU6050_PWR_MGMT_1,0x01);//此处配置要参考MPU6050寄存器手册
 	MPU6050_WriteReg(MPU6050_PWR_MGMT_2,0x00);
-	MPU6050_WriteReg(MPU6050_SMPLRT_DIV,0x09);//此处表示10分频
-	MPU6050_WriteReg(MPU6050_CONFIG,0x06);//此处涉及外部同步与低通滤波器
+	MPU6050_WriteReg(MPU6050_SMPLRT_DIV,0x07);//此处表示8分频，MPU6050每1ms输出一次数据
+	MPU6050_WriteReg(MPU6050_CONFIG,0x00);//此处涉及外部同步与低通滤波器
 	MPU6050_WriteReg(MPU6050_GYRO_CONFIG,0x18);//此处涉及陀螺仪配置，现在配置（0x18）为满量程，
 	MPU6050_WriteReg(MPU6050_ACCEL_CONFIG,0x18);//此处涉及加速度配置量程及高通滤波器，现在配置（0x18）为满量程，//加速度计最大量程为16g，也就是32768对应16g
 	

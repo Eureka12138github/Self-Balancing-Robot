@@ -102,6 +102,94 @@ static void HandleInvalidPage(void) {
  *============================================================================*/
 
 /**
+ * @brief 统一处理数值编辑逻辑（支持 Key 和 Encoder，支持 int16 和 float）
+ * 
+ * @param active_item   当前激活的菜单项
+ * @param direction     方向：1 为增加，-1 为减少
+ * @param is_fast_input 是否处于“快速输入”状态 
+ *                      (对于 Encoder: 只要转动即为 true; 
+ *                       对于 Key: 仅在长按时为 true)
+ */
+static void MyOLED_Process_Value_Edit(MyMenuItem* active_item, int8_t direction, bool is_fast_input) {
+    if (!active_item || !active_item->edit_config) return;
+
+    uint32_t now = SysTick_Get();
+
+    // 1. 初始化/更新加速状态 (使用通用命名)
+    if (g_current_page->last_input_time == 0) {
+        g_current_page->last_input_time = now;
+        g_current_page->input_accel = 1;
+    }
+
+    uint32_t dt = now - g_current_page->last_input_time;
+    
+    // 加速逻辑：
+    // 条件：处于快速输入模式 (长按或连续转动) AND 时间间隔极短 (<100ms)
+    if (is_fast_input && dt < 100 && dt > 0) {
+        g_current_page->input_accel++;
+        if (g_current_page->input_accel > 4) {
+            g_current_page->input_accel = 4; // 最大加速等级
+        }
+    } else {
+        // 非快速输入 (短按) 或 间隔过长 -> 重置为慢速
+        g_current_page->input_accel = 1;
+    }
+    g_current_page->last_input_time = now;
+
+    // 定义加速倍率表 (通用)
+    // 索引 0(初始):1, 1(慢):1, 2(中):5, 3(快):10, 4(极速):20
+    const uint8_t speed_boost_table[5] = {1, 1, 5, 10, 20};
+    
+    int32_t base_step = active_item->edit_config->step;
+    if (base_step <= 0) base_step = 1;
+
+    // ---------------------------------------------------------
+    // 分支 A: 处理 int16 类型
+    // ---------------------------------------------------------
+    if (active_item->int16_Value != NULL) {
+        int32_t boost_factor = speed_boost_table[g_current_page->input_accel];
+        int32_t actual_step = base_step * boost_factor;
+        
+        int32_t current_val = (int32_t)(*active_item->int16_Value);
+        int32_t new_val = current_val + (direction * actual_step);
+
+        // 边界限制
+        if (new_val < active_item->edit_config->min) {
+            new_val = active_item->edit_config->min;
+        } else if (new_val > active_item->edit_config->max) {
+            new_val = active_item->edit_config->max;
+        }
+
+        *active_item->int16_Value = (uint16_t)new_val;
+    }
+    // ---------------------------------------------------------
+    // 分支 B: 处理 float 类型
+    // ---------------------------------------------------------
+    else if (active_item->float_Value != NULL) {
+        // 浮点步长计算：base_step * 系数 * 加速倍率
+        // 系数 0.001f 可根据实际需求调整，或从 config 读取
+        float base_step_f = (float)base_step * 0.001f; 
+        float boost_factor_f = (float)speed_boost_table[g_current_page->input_accel];
+        float actual_step_f = base_step_f * boost_factor_f;
+        
+        float current_val = *active_item->float_Value;
+        float new_val = current_val + (direction * actual_step_f);
+
+        // 边界限制 (将 config 的 int min/max 转为 float 比较)
+        float f_min = (float)active_item->edit_config->min;
+        float f_max = (float)active_item->edit_config->max;
+
+        if (new_val < f_min) {
+            new_val = f_min;
+        } else if (new_val > f_max) {
+            new_val = f_max;
+        }
+
+        *active_item->float_Value = new_val;
+    }
+}
+
+/**
  * @brief 获取最大可见菜单项数量
  * 
  * 根据屏幕高度和字体大小计算可同时显示的菜单项数量
@@ -179,7 +267,15 @@ static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const cha
 static void InitScrollState(MyMenuItem* item) {
     if (item == NULL) return;
     
-    item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
+	if(item->int16_Value != NULL) {
+		item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
+	}
+	if(item->float_Value != NULL) {
+		item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+	}else {
+    item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text);	
+	}	
+
     
     int16_t available_width = OLED_WIDTH - START_POINT_OF_TEXT_DISPLAY;
     
@@ -313,6 +409,8 @@ static void DisplayScrollingText(uint8_t x, uint8_t y, const MyMenuItem* item) {
 		//新实现：长字符串流畅显示
 		if(item->int16_Value != NULL) {
 			OLED_PrintfMixArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
+		}else if(item->float_Value != NULL){
+			OLED_PrintfMixArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
 		}else {
 			OLED_ShowMixStringArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,item->text,OLED_16X16_FULL, OLED_8X16_HALF);
 		}	
@@ -333,13 +431,21 @@ static void DisplayScrollingText(uint8_t x, uint8_t y, const MyMenuItem* item) {
  */
 static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_active) {
     char prefix[4] = {0};
-    
+    bool is_dynamic_content = false;	
     uint8_t text_x = x + START_POINT_OF_TEXT_DISPLAY;
-    
-    bool is_dynamic_content = (item->int16_Value != NULL);
-    
+	
+    if(item->int16_Value != NULL || item->float_Value != NULL) {
+		is_dynamic_content = true;
+	}
+	
     if (is_dynamic_content) {
-        int16_t new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
+		int16_t new_width;
+		if(item->int16_Value != NULL) {
+			new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);		
+		}else {
+			new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+		}
+
         
         if (abs(new_width - item->text_width) >= 8) {
             item->text_width = new_width;
@@ -359,7 +465,9 @@ static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_acti
     } else {
         if (item->int16_Value != NULL) {
             OLED_PrintfMix(text_x, y, OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
-        } else {
+        } else if(item->float_Value != NULL) {
+			OLED_PrintfMix(text_x, y, OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+		}else {
             OLED_ShowMixString(text_x, y,item->text,OLED_16X16_FULL, OLED_8X16_HALF);
         }
     }
@@ -506,10 +614,7 @@ void MyOLED_UI_Init(MyMenuPage* page) {
     Delay_Init();                     // 必须最先初始化（用于后续延时）
     OLED_Init();//OLED屏初始化，与数据显示有关
     Timer1_Init();//定时1初始化，与任务调度有关	
-    Key_Init();
-#ifdef USE_ENCODER_INPUT
-	Encoder_Init();
-#endif	    
+    Key_Init();	    
     if (page == NULL) {
         OLED_Clear();
         OLED_ShowString(0, 0, "PAGE NULL!", OLED_8X16_HALF);
@@ -530,13 +635,13 @@ void MyOLED_UI_Init(MyMenuPage* page) {
  * @note 应该在 main 函数中循环调用，调用频率应高于 SET_FRAME_INTERVAL（如 1~5ms 一次）
  */
 void MyOLED_UI_MainLoop(void) {
+	
+
+	
     // 【始终执行】采集按键事件
     static KeyEventType s_key_events[MAX_KEYS_NUM] = {KEY_EVENT_NONE};
     Key_GetEvent(s_key_events, MAX_KEYS_NUM);
 
-#ifdef USE_ENCODER_INPUT
-    int16_t enc = Encoder_Get();
-#endif
 
     // 【始终执行】处理按键事件
     if (s_key_events[0] == KEY_EVENT_CLICK) {
@@ -545,76 +650,57 @@ void MyOLED_UI_MainLoop(void) {
     if (s_key_events[1] == KEY_EVENT_CLICK) {
         MyOLED_UI_Back();
     }
+		// 处理 key3 (索引2): 减小 / 向上
+		if (s_key_events[2] != KEY_EVENT_NONE) {
+				MyMenuItem* active_item = &g_current_page->items[g_current_page->active_id];
 
-#ifdef USE_ENCODER_INPUT
-    // 【始终执行】处理编码器输入
-    if (enc != 0) {
-        if (IsCurrentPageValid()) {
-            MyMenuItem* active_item = &g_current_page->items[g_current_page->active_id];
-            
-            if (active_item->is_editing && active_item->int16_Value != NULL && active_item->edit_config != NULL) {
-                uint32_t now = SysTick_Get();
-                
-                // 防止系统刚启动时 dt 异常（SysTick 溢出或未初始化）
-                if (g_current_page->last_encoder_time == 0) {
-                    g_current_page->last_encoder_time = now;
-                    g_current_page->encoder_accel = 1;
-                }
-                
-                uint32_t dt = now - g_current_page->last_encoder_time;
-                
-                // 加速逻辑：短时间内连续转动 → 加速
-                if (dt < 100 && dt > 0) { // dt>0 防止回绕异常
-                    g_current_page->encoder_accel++;
-                    if (g_current_page->encoder_accel > 4) {
-                        g_current_page->encoder_accel = 4;
-                    }
-                } else {
-                    g_current_page->encoder_accel = 1; // 重置为慢速
-                }
-                g_current_page->last_encoder_time = now;
+				// 检查是否处于编辑模式 且 有有效的数值指针 (int 或 float)
+				if (active_item->is_editing && active_item->edit_config != NULL && 
+						(active_item->int16_Value != NULL || active_item->float_Value != NULL)) {
+						
+						bool is_long_press = (s_key_events[2] == KEY_EVENT_LONG_PRESS);
+						
+						// 调用统一函数：方向 -1 (减小)
+						MyOLED_Process_Value_Edit(active_item, -1, is_long_press);
+				} 
+				else {
+						// 非编辑模式：导航
+						MyOLED_UI_MoveUp();
+						// 重置加速状态
+						g_current_page->input_accel = 1;
+						g_current_page->last_input_time = 0;
+				}
+		}
 
-                // ✅ 使用配置中的 step，并应用加速倍率
-                int32_t base_step = active_item->edit_config->step;
-                if (base_step <= 0) base_step = 1; // 安全兜底
+		// 处理 key4 (索引3): 增大 / 向下
+		if (s_key_events[3] != KEY_EVENT_NONE) {
+				MyMenuItem* active_item = &g_current_page->items[g_current_page->active_id];
 
-                // 🔧【推荐】使用非线性加速表（比线性 ×1,×2,×3 更符合直觉）
-                const uint8_t accel_table[5] = {1, 1, 5, 10, 20}; // index: 0~4
-                int32_t actual_step = base_step * accel_table[g_current_page->encoder_accel];
+				// 检查是否处于编辑模式 且 有有效的数值指针
+				if (active_item->is_editing && active_item->edit_config != NULL && 
+						(active_item->int16_Value != NULL || active_item->float_Value != NULL)) {
+						
+						bool is_long_press = (s_key_events[3] == KEY_EVENT_LONG_PRESS);
+						
+						// 调用统一函数：方向 +1 (增大)
+						MyOLED_Process_Value_Edit(active_item, 1, is_long_press);
+				} 
+				else {
+						// 非编辑模式：导航
+						MyOLED_UI_MoveDown();
+						// 重置加速状态
+						g_current_page->input_accel = 1;
+						g_current_page->last_input_time = 0;
+				}
+		}
 
-                int32_t current_val = (int32_t)(*active_item->int16_Value);
-                int32_t delta = (enc >= 1) ? actual_step : -actual_step;
-                int32_t new_val = current_val + delta;
-                
-                // 边界限制
-                if (new_val < active_item->edit_config->min) {
-                    new_val = active_item->edit_config->min;
-                } else if (new_val > active_item->edit_config->max) {
-                    new_val = active_item->edit_config->max;
-                }
-                
-                *active_item->int16_Value = (uint16_t)new_val;
-            } else {
-                // 导航模式：上下移动
-                if (enc == 1) {
-                    MyOLED_UI_MoveDown();
-                } else if (enc == -1) {
-                    MyOLED_UI_MoveUp();
-                }
-                
-                // 👇【重要】退出编辑状态时重置加速状态，避免下次进入编辑时残留高速
-                g_current_page->encoder_accel = 1;
-                g_current_page->last_encoder_time = 0;
-            }
-        }
-    }
-#endif
-	
+
     // 【始终执行】统一的安全检查和错误处理
     if (!IsCurrentPageValid()) {
         HandleInvalidPage();
         return;
-    }
+    }		
+
 
     // 【始终执行】同步槽位与活动ID
     SyncSlotWithActiveId();

@@ -75,6 +75,7 @@ typedef struct MyMenuItem {
     int16_t scroll_offset;               /**< 水平滚动偏移量(像素) */
     int16_t text_width;                 /**< 文本宽度缓存(像素) */
     bool is_scrolling;                   /**< 滚动状态标志 */
+		float* float_Value; 
 } MyMenuItem;
 
 /**
@@ -94,8 +95,8 @@ typedef struct MyMenuPage {
     uint32_t last_scroll_time;           /**< 上次滚动更新时间戳 */
     uint16_t scroll_delay;               /**< 滚动动画更新间隔(毫秒) */
 	
-    uint32_t last_encoder_time;  // 上次编码器触发时间
-    uint8_t  encoder_accel;      // 当前加速等级（1=慢, 2=中, 3=快...）    	
+    uint32_t last_input_time;  // 上次编码器触发时间
+    uint8_t  input_accel;      // 当前加速等级（1=慢, 2=中, 3=快...）    	
 } MyMenuPage;
 
 #endif // MENU_CORE_TYPES_H

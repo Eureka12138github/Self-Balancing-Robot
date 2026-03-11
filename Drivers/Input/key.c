@@ -71,13 +71,13 @@ void Key_Init(void)
 
     // 配置 GPIOA 的按键引脚
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; // 上拉输入模式
-    GPIO_InitStructure.GPIO_Pin = KEY1_PIN | KEY2_PIN; // 选择需要配置的端口
+    GPIO_InitStructure.GPIO_Pin = KEY2_PIN | KEY3_PIN | KEY4_PIN; // 选择需要配置的端口
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; // 在输入模式下，这里其实不用配置
     GPIO_Init(GPIOA, &GPIO_InitStructure);
 
     // 配置 GPIOB 的按键引脚
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU; // 上拉输入模式
-    GPIO_InitStructure.GPIO_Pin = KEY3_PIN | KEY4_PIN; // 选择需要配置的端口
+    GPIO_InitStructure.GPIO_Pin = KEY1_PIN; // 选择需要配置的端口
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; // 在输入模式下，这里其实不用配置
     GPIO_Init(GPIOB, &GPIO_InitStructure);
 }

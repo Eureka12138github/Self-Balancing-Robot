@@ -17,13 +17,13 @@ void Initialize_System(void) {
 		Usart1_Init(115200); 								//初始化调试串口
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);  //优先级分组配置   
 		MYIWD_Init(2000);
-//	RP_Init();
 		Motor_Init();
 		Hall_Encoder_Init();
 		MPU6050_Init();
+//		BlueSerial_Init();
 	
-//	LED_Init();
-//	LED1_ON();
+		LED_Init();
+		LED1_ON();
 		
 
 }

@@ -8,7 +8,6 @@ void LED_Init(void)
     gpio.GPIO_Speed = GPIO_Speed_50MHz;
     gpio.GPIO_Pin = LED1_PIN;
 		//取消LED2初始，此项目没用到
-    gpio.GPIO_Pin = LED2_PIN;	
     GPIO_Init(LED_GPIO_PORT, &gpio);
     
     LED1_OFF();

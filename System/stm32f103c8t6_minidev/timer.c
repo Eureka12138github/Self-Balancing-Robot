@@ -21,7 +21,7 @@ void Timer1_Init(void)
     TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
     TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;      // 不对输入滤波时钟分频
     TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;            // 高级功能，此处无需重复计数
-    TIM_TimeBaseInitStructure.TIM_Period = 10 - 1;                  // 自动重载值 (ARR)
+    TIM_TimeBaseInitStructure.TIM_Period = 50 - 1;                  // 自动重载值 (ARR)
     TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up; // 向上计数模式
     TIM_TimeBaseInitStructure.TIM_Prescaler = 7200 - 1;             // 预分频值 (PSC)
     TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure);

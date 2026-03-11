@@ -56,6 +56,17 @@ static const MenuEditConfig s_RP_edit_config = {
     .step = 1       // 每次调节步进
 };
 
+static const MenuEditConfig s_PID_edit_config = {
+    .min  = 0,      // 最小值
+    .max  = 1,    // 最大值
+    .step = 1       // 每次调节步进
+};
+
+static const MenuEditConfig s_PID_Kp_edit_config = {
+    .min  = 0,      // 最小值
+    .max  = 20,    // 最大值
+    .step = 1       // 每次调节步进
+};
 
 // ==================== 主菜单项定义 ====================
 /**
@@ -79,7 +90,22 @@ static const MenuEditConfig s_RP_edit_config = {
  */
 MyMenuItem MainItems[] = {    
     // 【完整初始化示例】—— 明确所有字段，便于理解结构体布局与默认值
-    {
+    {"设置", NULL, &SettingsPage, NULL, MENU_ITEM_NORMAL},          ///< 导航到设置子菜单   
+	{
+				.text         = "AAcc:%+4.3f",               ///< 显示文本
+        .callback     = NULL,          ///< 回调函数
+        .submenu      = NULL,        ///< 跳转至监控子菜单
+        .int16_Value  = NULL,                ///< 不关联数值变量
+        .item_type    = MENU_ITEM_NORMAL,    ///< 普通菜单项
+        .edit_config  = NULL,                ///< 不可编辑
+        .is_editing   = false,               ///< 初始非编辑状态
+        .scroll_offset= 0,                   ///< 滚动偏移初始为0
+        .text_width   = 0,                   ///< 文本宽度由运行时计算
+        .is_scrolling = false,                ///< 初始无滚动动画
+				.float_Value  = &angleAcc
+    },		
+
+	{
         .text         = "监控",               ///< 显示文本
         .callback     = NULL,                ///< 无回调函数
         .submenu      = &MonitorPage,        ///< 跳转至监控子菜单
@@ -93,16 +119,11 @@ MyMenuItem MainItems[] = {
     },
 
     // 普通导航项：简洁写法，但显式指定 item_type 保证语义安全
-    {"设置", NULL, &SettingsPage, NULL, MENU_ITEM_NORMAL},          ///< 导航到设置子菜单
+
     {"更多", NULL, &MorePage, NULL, MENU_ITEM_NORMAL},              ///< 导航到更多子菜单
 
-    // 回调执行项：点击后直接执行函数，不跳转页面
-    {"TEST1", Test_Callback_1, NULL, NULL, MENU_ITEM_NORMAL},       ///< 执行测试回调函数
 
-    // 长文本项：文本超宽时自动启用水平滚动（滚动逻辑在渲染时处理）
-    {"TEST2:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL, MENU_ITEM_NORMAL},
-    {"TEST3:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL, MENU_ITEM_NORMAL},
-    {"TEST4:ABCDIHOIAJFJLSAJDKFJAKLJDLFAJLD", NULL, NULL, NULL, MENU_ITEM_NORMAL},
+
 
     // 数组结束标记：必须存在，用于菜单遍历时判断终止条件
     {0}
@@ -116,9 +137,99 @@ MyMenuItem MainItems[] = {
  * 注意最后一项为返回按钮的特殊配置
  */
 MyMenuItem SettingsItems[] = {
-    {"Setting_1", NULL, NULL,NULL, MENU_ITEM_NORMAL},              // 普通设置项
-    {"Setting_2", NULL, NULL, NULL,MENU_ITEM_NORMAL},              // 普通设置项
-    {"Setting_3", NULL, NULL, NULL,MENU_ITEM_NORMAL},              // 普通设置项	
+	
+    {
+        .text         = "RUN/STOP",               ///< 显示文本
+        .callback     = Test_Callback_1,          ///< 回调函数
+        .submenu      = NULL,        ///< 跳转至监控子菜单
+        .int16_Value  = NULL,                ///< 不关联数值变量
+        .item_type    = MENU_ITEM_NORMAL,    ///< 普通菜单项
+        .edit_config  = NULL,                ///< 不可编辑
+        .is_editing   = false,               ///< 初始非编辑状态
+        .scroll_offset= 0,                   ///< 滚动偏移初始为0
+        .text_width   = 0,                   ///< 文本宽度由运行时计算
+        .is_scrolling = false                ///< 初始无滚动动画
+    },	
+	
+		{
+        .text        = "A_Kp:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value   = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = (MenuEditConfig*)&s_PID_Kp_edit_config, // 启用编辑
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &anglePID.Kp					
+    },    
+    {
+        .text        = "A_Ki:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value   = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = (MenuEditConfig*)&s_PID_edit_config, // 启用编辑
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &anglePID.Ki 
+    }, 
+    {
+        .text        = "A_Kd:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value   = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = (MenuEditConfig*)&s_PID_edit_config, // 启用编辑
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &anglePID.Kd
+    }, 	
+    {
+        .text        = "A_tar:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value   = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = NULL,
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &anglePID.target
+    }, 	
+    {
+        .text        = "A_act:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value   = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = NULL,
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &anglePID.actual
+    },
+		
+    {
+        .text        = "A_out:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = NULL,
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &anglePID.out
+    },		
     // 返回项配置 - 特殊类型MENU_ITEM_BACK
     {"[返回]", NULL, NULL, NULL, MENU_ITEM_BACK},  
     
@@ -136,7 +247,7 @@ MyMenuItem SettingsItems[] = {
 MyMenuItem MonitorItems[] = {
 
     {
-        .text        = "RP1:%d",
+        .text        = "Speed_L:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
         .int16_Value   = &g_rp_value1,              // 关联变量
@@ -149,7 +260,7 @@ MyMenuItem MonitorItems[] = {
     },
 	
     {
-        .text        = "RP2:%d",
+        .text        = "Speed_R:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
         .int16_Value   = &g_rp_value2,              // 关联变量
@@ -161,7 +272,7 @@ MyMenuItem MonitorItems[] = {
         .is_scrolling = false
     },
     {
-        .text        = "RP3:%d",
+        .text        = "Left:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
         .int16_Value   = &g_rp_value3,              // 关联变量
@@ -174,7 +285,7 @@ MyMenuItem MonitorItems[] = {
     },	
 	
     {
-        .text        = "RP4:%d",
+        .text        = "Right:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
         .int16_Value   = &g_rp_value4,              // 关联变量
@@ -230,8 +341,8 @@ MyMenuPage MainPage = {
     .ItemNum = (sizeof(MainItems) / sizeof(MyMenuItem)) - 1,  // 自动计算项数
     .last_scroll_time = 0,                       // 滚动时间基准初始化
     .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
-	.last_encoder_time = 0,
-	.encoder_accel = 1	
+		.last_input_time = 0,
+		.input_accel = 1	
 };
 
 /**
@@ -251,8 +362,8 @@ MyMenuPage SettingsPage = {
     .ItemNum = (sizeof(SettingsItems) / sizeof(MyMenuItem)) - 1,  // 自动计算
     .last_scroll_time = 0,                       // 滚动时间基准初始化
     .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
-	.last_encoder_time = 0,
-	.encoder_accel = 1	
+		.last_input_time = 0,
+		.input_accel = 1	
 };
 
 /**
@@ -270,8 +381,8 @@ MyMenuPage MonitorPage = {
     .ItemNum = (sizeof(MonitorItems) / sizeof(MyMenuItem)) - 1,   // 自动计算
     .last_scroll_time = 0,                       // 滚动时间基准初始化
     .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
-	.last_encoder_time = 0,
-	.encoder_accel = 1
+		.last_input_time = 0,
+		.input_accel = 1
 };
 
 /**
@@ -289,6 +400,6 @@ MyMenuPage MorePage = {
     .ItemNum = (sizeof(MoreItems) / sizeof(MyMenuItem)) - 1,      // 自动计算
     .last_scroll_time = 0,                       // 滚动时间基准初始化
     .scroll_delay = SET_SCROLL_DELAY,             // 滚动动画间隔
-	.last_encoder_time = 0,
-	.encoder_accel = 1	
+		.last_input_time = 0,
+		.input_accel = 1	
 };
