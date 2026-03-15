@@ -1,9 +1,23 @@
 /**
  * @file task_sched.c
- * @brief 基于时间片轮转 + DMA事件驱动的轻量级任务调度系统
- *
- * 本模块实现任务：
- * 定时周期任务（由 SysTick 驱动 TaskSchedule 更新）
+ * @brief 基于时间片检查的轻量级非阻塞任务管理器
+ * 
+ * @details
+ * 【重要架构说明】
+ * 本模块 **不是** 严格意义上的“时间片轮转 (Round-Robin)”系统。
+ * - 真正的 Round-Robin 通常指操作系统级别的“抢占式”调度，能强制中断当前任务。
+ * - 本模块实质是一个 **“非阻塞式主循环管理器” (Non-blocking Main Loop Manager)** 或 **“时间片检查器”**。
+ * 
+ * 【工作原理】
+ * 1. 依赖定时器中断中定期（此刻需5ms调用一次）调用 `TaskSchedule()` 来递减时间计数器。
+ * 2. 当计数器归零，标记任务为“可执行 (run=1)”。
+ * 3. `TaskHandler()` 在主循环中顺序执行所有被标记的任务。
+ * 
+ * 【局限性警告】
+ * - **非实时性**：任务的实际执行间隔 = 设定周期 + 主循环中其他任务的耗时总和。
+ * - **阻塞风险**：若列表中某个任务（如 UI 刷新）耗时过长，后续所有任务都会发生“堆积延迟”。
+ * - **适用场景**：按键扫描、LED 闪烁、低速传感器读取、数据上报等 **软实时 (Soft Real-Time)** 任务。
+ * - **禁止场景**：严禁用于 PID 控制、电机 PWM 生成、高速编码器采集等对时序抖动敏感的 **硬实时 (Hard Real-Time)** 任务（此类任务应放入定时器中断）。
  */
 
 /* ======================== 头文件包含 ======================== */
@@ -12,247 +26,98 @@
 #include <stdbool.h>
 #include "key.h"
 #include "hall_encoder.h"
-#include "MPU6050.h"
-#include "LED.h"
-#include "motor.h"
-#include <math.h>
+
 /* ======================== 宏定义 ======================== */
-// 任务数组大小计算
-#define TASK_NUM_MAX        (sizeof(TaskComps) / sizeof(TaskComps[0]))  ///< 定时任务数量
+// 自动计算任务表长度，避免手动修改出错
+#define TASK_NUM_MAX        (sizeof(TaskComps) / sizeof(TaskComps[0]))  
 
-// 定时任务周期（单位：ms）
-#define KEY_SCAN_INTERVEL_MS           4   ///< 按键扫描周期 4*5 = 20ms
-#define HALL_ENCODER_GET_INTERVEL_MS           8   ///< 霍尔编码器增量获取周期
-
+// 定时任务周期配置（单位：调用次数，需结合 TaskSchedule 的调用频率换算）
+// 假设 TaskSchedule 每 5ms 被调用一次：
+#define KEY_SCAN_INTERVEL_MS           4   ///< 按键扫描周期：4 * 5ms = 20ms
+#define HALL_ENCODER_GET_INTERVEL_MS   8   ///< 霍尔编码器读取周期：8 * 5ms = 40ms 
+                                           ///< @warning 此周期仅适用于速度环外环或数据显示，不可用于核心速度闭环控制。
 
 /* ======================== 类型定义 ======================== */
 
 /**
- * @brief 任务调度结构体（时间驱动）
+ * @brief 任务控制块 (TCB) - 简化版
  */
 typedef struct {
-    bool run;                   ///< 是否可执行
-    uint16_t TimCount;          ///< 当前计数值
-    uint16_t TimeRload;         ///< 重载值（周期）
+    bool run;                   ///< 任务就绪标志：1=可执行，0=等待
+    uint16_t TimCount;          ///< 当前倒计时计数值
+    uint16_t TimeRload;         ///< 重载值（周期基数）
     void (*pTaskFunc)(void);    ///< 任务函数指针
 } TaskComps_t;
 
-
-
-
 /* ======================== 定时任务函数 ======================== */
 
-void Hall_Encoder_Test(void) {
-		g_rp_value3 = Hall_Encoder_Get(ENCODER_LEFT);
-		g_rp_value4 = Hall_Encoder_Get(ENCODER_RIGHT);
-
-}
-
-//void Angle_Get(void) {
-//		MPU6050_GetData(&AX, &AY, &AZ, &GX, &GY, &GZ);
-//		angleAcc = -atan2(AX,AZ) / 3.14159 * 180;  
-//		angleGyro = angle + GY / 32768.0 * 2000*0.001;//满量程下正负2000°/s，这里是在进行缩放，需要看MPU6050手册才可理解
-//		float alpha = 0.1;//此值与与计算周期有关，需适当调整
-//		angle = alpha * angleAcc + (1 - alpha) * angleGyro;//这里是互补滤波，基于acc抑制gyro的零漂
-//    if(angle > 40 || angle < -40) { // 阈值设小一点，40度基本救不回来了
-//        run_flag = false;
-//        LED1_OFF();
-//        
-//        // 【关键】立即物理停机，不要等 PID 任务
-//        Motor_SetSpeed(MOTOR_LEFT, 0);
-//        Motor_SetSpeed(MOTOR_RIGHT, 0);
-//        
-//        // 【关键】清零 PID 状态，防止积分饱和
-//        PID_reset(&anglePID); // 
-//    }
-//}
-
-//// 全局变量保存上一次的值，用于斜坡限制
-//static int16_t prev_left_pwm = 0;
-//static int16_t prev_right_pwm = 0;
-
-//void Angle_PID(void) {
-//    // 1. 安全检查：如果标志位无效，直接停机并清零
-//    if (!run_flag) {
-//        Motor_SetSpeed(MOTOR_LEFT, 0);
-//        Motor_SetSpeed(MOTOR_RIGHT, 0);
-//        // 重要：这里最好调用 PID_Reset(&anglePID) 清零积分项
-//        prev_left_pwm = 0;
-//        prev_right_pwm = 0;
-//        return;
-//    }
-
-//    // 2. PID 计算
-//    anglePID.actual = angle;
-//    PID_update(&anglePID);
-//    
-//    // 3. 分配左右轮
-//    int32_t raw_left = -anglePID.out + (dif_PWM / 2);
-//    int32_t raw_right = -anglePID.out - (dif_PWM / 2);
-
-//    // 4. 限幅 (硬限制)
-//    if (raw_left > anglePID.out_max) raw_left = anglePID.out_max;
-//    if (raw_left < anglePID.out_min) raw_left = anglePID.out_min;
-//    if (raw_right > anglePID.out_max) raw_right = anglePID.out_max;
-//    if (raw_right < anglePID.out_min) raw_right = anglePID.out_min;
-
-//    // 5. 【核心】斜坡限制 (软限制，防止突变)
-//    // 每次最多变化 30-50 个单位
-//    int16_t max_step = 40; 
-//    
-//    int16_t target_left = (int16_t)raw_left;
-//    int16_t target_right = (int16_t)raw_right;
-
-//    if (target_left > prev_left_pwm + max_step) target_left = prev_left_pwm + max_step;
-//    else if (target_left < prev_left_pwm - max_step) target_left = prev_left_pwm - max_step;
-
-//    if (target_right > prev_right_pwm + max_step) target_right = prev_right_pwm + max_step;
-//    else if (target_right < prev_right_pwm - max_step) target_right = prev_right_pwm - max_step;
-
-//    // 6. 输出
-//    Motor_SetSpeed(MOTOR_LEFT, target_left);
-//    Motor_SetSpeed(MOTOR_RIGHT, target_right);
-
-//    // 7. 更新历史值
-//    prev_left_pwm = target_left;
-//    prev_right_pwm = target_right;
-//}
-
-
-/* 在 task_sched.c 或专门的 control.c 中 */
-
-// 全局变量用于斜坡限制 (保持不变)
-static int16_t prev_left_pwm = 0;
-static int16_t prev_right_pwm = 0;
-
 /**
- * @brief 核心控制律：读取->计算->输出 (原子操作)
- * 此函数将被定时器中断调用，严禁在此函数中进行耗时操作(如printf, OLED, 延时)
+ * @brief 霍尔编码器数据读取任务
+ * @note 仅用于获取速度值供显示或低速闭环，高频控制请移至中断。
  */
-void Balance_Control_Loop(void) {
-    int16_t ax, ay, az, gx, gy, gz;
-    MPU6050_GetData(&ax, &ay, &az, &gx, &gy, &gz); 
-    
-    // 互补滤波 (保持浮点，F103较慢但5ms内通常能完成)
-    float angleAcc = -atan2((float)ax, (float)az) / 3.14159f * 180.0f;
-    static float angle_last = 0.0f;
-    float angleGyro = angle_last + ((float)gy / 32768.0f * 2000.0f * 0.005f); // 0.005s = 5ms
-    float alpha = 0.1f;
-    float current_angle = alpha * angleAcc + (1.0f - alpha) * angleGyro;
-    angle_last = current_angle; // 更新用于下次积分
-    
-    // 倒地保护
-    if(current_angle > 40.0f || current_angle < -40.0f) {
-        run_flag = false;
-        // 立即停机
-        Motor_SetSpeed(MOTOR_LEFT, 0);
-        Motor_SetSpeed(MOTOR_RIGHT, 0);
-        PID_reset(&anglePID);
-        prev_left_pwm = 0;
-        prev_right_pwm = 0;
-        // 可以在这里置位一个标志，让主循环去关灯
-        return; 
-    }
-
-    if (!run_flag) {
-        Motor_SetSpeed(MOTOR_LEFT, 0);
-        Motor_SetSpeed(MOTOR_RIGHT, 0);
-        prev_left_pwm = 0;
-        prev_right_pwm = 0;
-        return;
-    }
-
-    // 2. PID 计算
-    anglePID.target = 0.0f; // 直立目标为0
-    anglePID.actual = current_angle;
-    PID_update(&anglePID);
-
-    // 3. 左右轮分配 (假设 dif_PWM 是全局变量，由速度环或遥控更新)
-    // 注意：dif_PWM 的更新也需要注意原子性，如果它在主循环改，这里读，可能读到一半。
-    // 对于 F103 单核，简单变量读写通常是原子的，但最好关中断保护或保持一致性
-    int32_t raw_left = -anglePID.out + (dif_PWM / 2);
-    int32_t raw_right = -anglePID.out - (dif_PWM / 2);
-
-    // 4. 硬限幅
-    if (raw_left > anglePID.out_max) raw_left = anglePID.out_max;
-    if (raw_left < anglePID.out_min) raw_left = anglePID.out_min;
-    if (raw_right > anglePID.out_max) raw_right = anglePID.out_max;
-    if (raw_right < anglePID.out_min) raw_right = anglePID.out_min;
-
-    // 5. 斜坡限制 (防止突变)
-    int16_t max_step = 40; 
-    int16_t target_left = (int16_t)raw_left;
-    int16_t target_right = (int16_t)raw_right;
-
-    if (target_left > prev_left_pwm + max_step) target_left = prev_left_pwm + max_step;
-    else if (target_left < prev_left_pwm - max_step) target_left = prev_left_pwm - max_step;
-
-    if (target_right > prev_right_pwm + max_step) target_right = prev_right_pwm + max_step;
-    else if (target_right < prev_right_pwm - max_step) target_right = prev_right_pwm - max_step;
-
-    // 6. 输出
-    Motor_SetSpeed(MOTOR_LEFT, target_left);
-    Motor_SetSpeed(MOTOR_RIGHT, target_right);
-
-    // 7. 更新历史
-    prev_left_pwm = target_left;
-    prev_right_pwm = target_right;
-    
-    // 更新全局 angle 供其他任务参考
-    angle = current_angle;
+void Hall_Encoder_Test(void) {
+    g_rp_value3 = Hall_Encoder_Get(ENCODER_LEFT);
+    g_rp_value4 = Hall_Encoder_Get(ENCODER_RIGHT);
 }
-
-
 
 /* ======================== 任务表定义 ======================== */
 
-/** @brief 定时任务表 */
+/** 
+ * @brief 静态任务列表
+ * @note 任务执行顺序即为数组排列顺序。耗时长的任务建议放在后面，以免阻塞前面的任务。
+ */
 static TaskComps_t TaskComps[] = {
-	
-	{0, KEY_SCAN_INTERVEL_MS,      KEY_SCAN_INTERVEL_MS, Key_Scan},
-	{0, HALL_ENCODER_GET_INTERVEL_MS,      HALL_ENCODER_GET_INTERVEL_MS, Hall_Encoder_Test},
-
-
+    // {初始run标志，当前计数，重载周期，函数指针}
+    {0, KEY_SCAN_INTERVEL_MS,      KEY_SCAN_INTERVEL_MS,      Key_Scan},
+    {0, HALL_ENCODER_GET_INTERVEL_MS, HALL_ENCODER_GET_INTERVEL_MS, Hall_Encoder_Test},
 };
-
 
 /* ======================== 调度器实现 ======================== */
 
 /**
- * @brief 定时任务调度器
- *
- * 更新所有定时任务的时间计数器。
- * 当计数归零时，重载计数值并标记任务为可执行（run = 1）。
+ * @brief 时间片更新器 (Time-Slice Checker)
+ * 
+ * @details
+ * 定时器中断高频调用（例如每 5ms 调用一次）。
+ * 它不负责“切换”任务，只负责“倒计时”和“打旗语”。
+ * 
+ * @warning 
+ * 若主循环被阻塞（如进入长延时或死循环），本函数无法执行，所有任务计时将暂停。
  */
 void TaskSchedule(void) {
-    for (u8 i = 0; i < TASK_NUM_MAX; i++) {
+    for (uint8_t i = 0; i < TASK_NUM_MAX; i++) {
         if (TaskComps[i].TimCount > 0) {
             TaskComps[i].TimCount--;
 
-            // 时间到，重载并标记可执行
+            // 计数归零，重置计数器并置位运行标志
             if (TaskComps[i].TimCount == 0) {
                 TaskComps[i].TimCount = TaskComps[i].TimeRload;
-                TaskComps[i].run = 1;  // 所有任务默认可执行
+                TaskComps[i].run = 1;  
             }
         }
     }
 }
 
 /**
- * @brief 定时任务执行器
- *
- * 遍历任务表，执行所有标记为可执行的任务。
+ * @brief 任务执行器 (Cooperative Dispatcher)
+ * 
+ * @details
+ * 顺序遍历任务表，执行所有就绪任务。
+ * 此为 **协作式 (Cooperative)** 执行：一旦某个 pTaskFunc() 内部耗时过长，
+ * 后续任务必须等待其返回后才能执行，导致实际周期偏离设定值。
+ * 
+ * @best_practice
+ * 确保每个 pTaskFunc 内部都是非阻塞的（无 delay，无长循环），快速返回。
  */
 void TaskHandler(void) {
-    for (u8 i = 0; i < TASK_NUM_MAX; i++) {
+    for (uint8_t i = 0; i < TASK_NUM_MAX; i++) {
+        // 检查标志位且函数指针有效
         if (TaskComps[i].run && TaskComps[i].pTaskFunc) {
-            TaskComps[i].run = 0;
-            TaskComps[i].pTaskFunc();
+            TaskComps[i].run = 0;       // 立即清除标志，防止重入
+            TaskComps[i].pTaskFunc();   // 执行任务（此处可能发生阻塞）
         }
     }
 }
 
-
 /* ======================== 系统辅助函数 ======================== */
-
-// ...
+// 预留接口：可扩展任务动态添加、挂起、恢复等功能

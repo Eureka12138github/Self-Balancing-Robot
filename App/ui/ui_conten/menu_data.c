@@ -68,6 +68,12 @@ static const MenuEditConfig s_PID_Kp_edit_config = {
     .step = 1       // 每次调节步进
 };
 
+static const MenuEditConfig s_PID_Kd_edit_config = {
+    .min  = 0,      // 最小值
+    .max  = 50,    // 最大值
+    .step = 1       // 每次调节步进
+};
+
 // ==================== 主菜单项定义 ====================
 /**
  * @brief 主菜单项数组
@@ -91,19 +97,7 @@ static const MenuEditConfig s_PID_Kp_edit_config = {
 MyMenuItem MainItems[] = {    
     // 【完整初始化示例】—— 明确所有字段，便于理解结构体布局与默认值
     {"设置", NULL, &SettingsPage, NULL, MENU_ITEM_NORMAL},          ///< 导航到设置子菜单   
-	{
-				.text         = "AAcc:%+4.3f",               ///< 显示文本
-        .callback     = NULL,          ///< 回调函数
-        .submenu      = NULL,        ///< 跳转至监控子菜单
-        .int16_Value  = NULL,                ///< 不关联数值变量
-        .item_type    = MENU_ITEM_NORMAL,    ///< 普通菜单项
-        .edit_config  = NULL,                ///< 不可编辑
-        .is_editing   = false,               ///< 初始非编辑状态
-        .scroll_offset= 0,                   ///< 滚动偏移初始为0
-        .text_width   = 0,                   ///< 文本宽度由运行时计算
-        .is_scrolling = false,                ///< 初始无滚动动画
-				.float_Value  = &angleAcc
-    },		
+
 
 	{
         .text         = "监控",               ///< 显示文本
@@ -183,14 +177,14 @@ MyMenuItem SettingsItems[] = {
         .submenu     = NULL,
         .int16_Value   = NULL,              // 关联变量
         .item_type   = MENU_ITEM_NORMAL,
-        .edit_config = (MenuEditConfig*)&s_PID_edit_config, // 启用编辑
+        .edit_config = (MenuEditConfig*)&s_PID_Kd_edit_config, // 启用编辑
         .is_editing  = false,                     // 初始非编辑态
         .scroll_offset = 0,
         .text_width  = 0,
         .is_scrolling = false,
 				.float_Value   = &anglePID.Kd
-    }, 	
-    {
+    }, 	  
+		{
         .text        = "A_tar:%+4.3f",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
@@ -202,7 +196,8 @@ MyMenuItem SettingsItems[] = {
         .text_width  = 0,
         .is_scrolling = false,
 				.float_Value   = &anglePID.target
-    }, 	
+    }, 
+		
     {
         .text        = "A_act:%+4.3f",
         .callback    = NULL,                      // 编辑模式下无需回调
@@ -214,7 +209,7 @@ MyMenuItem SettingsItems[] = {
         .scroll_offset = 0,
         .text_width  = 0,
         .is_scrolling = false,
-				.float_Value   = &anglePID.actual
+				.float_Value   = &angle
     },
 		
     {
@@ -247,6 +242,46 @@ MyMenuItem SettingsItems[] = {
 MyMenuItem MonitorItems[] = {
 
     {
+        .text        = "Acc:%+4.3f",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = NULL,
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = &angleAcc
+    },
+    {
+        .text        = "gy:%d",
+        .callback    = NULL,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value = &GY,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = NULL,
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = NULL
+    },		
+    {
+        .text        = "calibrate",
+        .callback    = Calibration_Callback,                      // 编辑模式下无需回调
+        .submenu     = NULL,
+        .int16_Value = NULL,              // 关联变量
+        .item_type   = MENU_ITEM_NORMAL,
+        .edit_config = NULL,
+        .is_editing  = false,                     // 初始非编辑态
+        .scroll_offset = 0,
+        .text_width  = 0,
+        .is_scrolling = false,
+				.float_Value   = NULL
+    },		
+		
+	{
         .text        = "Speed_L:%d",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,

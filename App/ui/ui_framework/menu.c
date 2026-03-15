@@ -137,8 +137,8 @@ static void MyOLED_Process_Value_Edit(MyMenuItem* active_item, int8_t direction,
     g_current_page->last_input_time = now;
 
     // 定义加速倍率表 (通用)
-    // 索引 0(初始):1, 1(慢):1, 2(中):5, 3(快):10, 4(极速):20
-    const uint8_t speed_boost_table[5] = {1, 1, 5, 10, 20};
+    // 索引 0(初始):1, 1(慢):1, 2(中):5, 3(快):10, 4(极速):15
+    const uint8_t speed_boost_table[5] = {1, 1, 5, 10, 15};
     
     int32_t base_step = active_item->edit_config->step;
     if (base_step <= 0) base_step = 1;
@@ -168,7 +168,7 @@ static void MyOLED_Process_Value_Edit(MyMenuItem* active_item, int8_t direction,
     else if (active_item->float_Value != NULL) {
         // 浮点步长计算：base_step * 系数 * 加速倍率
         // 系数 0.001f 可根据实际需求调整，或从 config 读取
-        float base_step_f = (float)base_step * 0.001f; 
+        float base_step_f = (float)base_step * 0.05f; 
         float boost_factor_f = (float)speed_boost_table[g_current_page->input_accel];
         float actual_step_f = base_step_f * boost_factor_f;
         

@@ -337,7 +337,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\cloud;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output;.\Drivers\IMU;.\Utils\PID</IncludePath>
+              <IncludePath>.\Config;.\Middlewares\Core;.\Middlewares\Third_Party;.\Test;.\App\ui\ui_framework;.\App\ui\ui_conten;.\App\log;.\App\storage;.\Core\Src;.\Core\Inc;.\Drivers\Communication;.\Drivers\Sensors;.\App\task;.\App\system;.\App\sensors;.\Library;.\System\stm32f103c8t6_minidev;.\Drivers\Input;.\Drivers\Display;.\Drivers\Display\Fonts;.\Utils\buffer;.\Utils\debug;.\Drivers\LED;.\Drivers\Output;.\Drivers\IMU;.\Utils\PID;.\App\control</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -756,6 +756,16 @@
               <FileType>5</FileType>
               <FilePath>.\System\stm32f103c8t6_minidev\MyI2C.h</FilePath>
             </File>
+            <File>
+              <FileName>Micro_Timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\Micro_Timer.c</FilePath>
+            </File>
+            <File>
+              <FileName>Micro_Timer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\stm32f103c8t6_minidev\Micro_Timer.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -1010,6 +1020,16 @@
               <FileName>menu_core_types.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\App\ui\ui_framework\menu_core_types.h</FilePath>
+            </File>
+            <File>
+              <FileName>control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\App\control\control.c</FilePath>
+            </File>
+            <File>
+              <FileName>control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\App\control\control.h</FilePath>
             </File>
           </Files>
         </Group>

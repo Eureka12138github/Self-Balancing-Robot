@@ -4,6 +4,6 @@
 #include "stm32f10x.h"                  // Device header
 
 void Test_Callback_1(void);
-
+void Calibration_Callback(void);
 
 #endif

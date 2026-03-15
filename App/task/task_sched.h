@@ -5,7 +5,4 @@
 void TaskHandler(void);
 void TaskSchedule(void);
 
-
-void Balance_Control_Loop(void);
-
 #endif

@@ -2,7 +2,7 @@
  * @file main.c
  * @brief 系统主程序入口
  * @author Eureka
- * @date 2026-03-02
+ * @date 2026-03-12
  * 
  * 初始化系统，并进入主循环。
  * 
@@ -51,8 +51,10 @@
 #include "menu.h"
 #include "task_sched.h"
 #include "System_Init.h"
+#include "Micro_Timer.h"
 #include <math.h>
-
+#include <string.h>
+#include <stdlib.h>
 /**
  * @brief 主函数入口
  */
@@ -61,6 +63,7 @@ int main(void)
 {
     /* ===== 系统初始化 ===== */
     Initialize_System();
+
 
     /* ===== 定义上次执行时间（单位：ms）===== */
 //    static uint32_t last_print_time = 0;  // 初始为 0，确保首次立即执行
@@ -75,11 +78,12 @@ int main(void)
 //            last_print_time = current_time;
 
 //        }
-			
-//				Serial_Printf(USART_DEBUG, "%f,%f,%f\r\n", angleAcc,angleGyro,angle);
+				Serial_Printf(USART_DEBUG,"%f,%f,%f\r\n",angleAcc,angleGyro,angle);
+		/*蓝牙串口接收数据包处理*/
+		/*规定的数据包格式为：[数据1,数据2,数据3,...]*/
 
 				TaskHandler();                // 如按键扫描、状态机等
-        MyOLED_UI_MainLoop();         // UI 刷新
+				MyOLED_UI_MainLoop();         // UI 刷新	,这坑爹UI刷新居然要占35~40ms之久！
         IWDG_ReloadCounter();         // 喂狗（必须高频调用！）
 
 

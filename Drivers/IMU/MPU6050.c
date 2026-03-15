@@ -1,6 +1,7 @@
 #include "stm32f10x.h"                  // Device header
 #include "MyI2C.h"
 #include "MPU6050_Reg.h"
+#include <math.h>
 #define MPU6050_Address		0XD0
 
 void MPU6050_WriteReg(uint8_t RegAddress,uint8_t Data)
@@ -121,6 +122,18 @@ void MPU6050_GetData(int16_t *AccX,int16_t *AccY,int16_t *AccZ,int16_t *GyroX,in
 	*GyroY = (data[10]<<8) | data[11];
 	*GyroZ = (data[12]<<8) | data[13];	
 }
+
+void Get_gy_angleAcc(int16_t *gy,float *angleAcc) {
+	uint8_t data[14];//一次性读取MPU6050数据寄存器，包括中间两个温度数据，见 MPU6050_Reg.h
+	int16_t ax;
+	int16_t az;		
+	MPU6050_Read_Multi_Regs(MPU6050_ACCEL_XOUT_H,data,14);
+	*gy = (data[10]<<8) | data[11];
+	ax = (data[0]<<8) | data[1];
+	az = (data[4]<<8) | data[5];
+	*angleAcc = -atan2((float)ax, (float)az) / 3.14159f * 180.0f;
+}
+
 
 
 uint8_t MOU6050_GetID(void)

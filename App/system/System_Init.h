@@ -8,6 +8,7 @@
 #include "MPU6050.h"
 #include "Delay.h"
 #include "BlueSerial.h"
+#include "control.h"
 void Initialize_System(void);
 
 #endif
