@@ -318,12 +318,33 @@ void Serial_SendNum(USART_TypeDef* USARTx, uint32_t Num, uint8_t Length)
  * @return   返回输入字符 ch
  *
  * @note 需在 SerialV2.h 中定义 USART_DEBUG 为目标串口（如 USART1）
+ *       ⚠️ 注意：此方法仅适用于 Keil MDK (MicroLib)
+ *       对于 PlatformIO (GCC + Newlib-Nano)，需要实现 _write()
  */
+int fputc(int ch, FILE* f) __attribute__((used));  // ← 对 GCC 可能无效
+
 int fputc(int ch, FILE* f)
 {
     (void)f;
     Serial_SendByte(USART_DEBUG, (uint8_t)ch);
     return ch;
+}
+
+/**
+ * @brief _write 系统调用 - GCC/Newlib-Nano 的 printf重定向关键
+ * @param file 文件描述符（忽略）
+ * @param ptr  数据缓冲区指针
+ * @param len  数据长度
+ * @return     实际写入的字符数
+ *
+ * @note ✅ 这是 PlatformIO + GCC环境下 printf重定向的正确方法！
+ *       printf → vfprintf → _write() → 这里
+ */
+int _write(int file, char *ptr, int len)
+{
+    (void)file;  //  unused
+    Serial_SendArray(USART_DEBUG, (uint8_t*)ptr, len);
+    return len;
 }
 
 /**
