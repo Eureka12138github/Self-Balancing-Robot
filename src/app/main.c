@@ -4,58 +4,20 @@
  * @author Eureka
  * @date 2026-03-12
  * 
- * 初始化系统，并进入主循环。
- * 
- * OLED 接线说明：
- *   GND → GND
- *   VCC → 3.3V
- *   SCL → PB8
- *   SDA → PB9
- 
- * 电机驱动 接线说明：
- *   PWMA → PA0
- *   PB13 → AIN1
- *   PB12 → AIN2
- *   STBY → 3.3V
- 
- *   PWMB → PA1
- *   PB15 → BIN1
- *   PB14 → BIN2
-
- *   E1A → PA7
- *   E1B → PA6
- *   E2A → PB6  
- *   E2B → PB7
- 
- 
- * 霍尔编码器输出：
- *	E1A → PA6
- * 	E1B → PA7
- 
- * MPU6050：
- *	SDA → PB11  
- * 	SCL → PB10 
- 
- * 旋转编码器：
- * 	A → PB0
- * 	B → PB1 
- 
- * 按键接线：
- * 	按键1 → PB12
- * 	按键2 → PB15
- * 
- * 预期现象：
- * 旋转编码器控制电机转速，串口接收到 一个范围在[-50,50]之内的值（此值可通过旋转编码器调节）
+ * 层次依赖说明:
+ * - 直接依赖：app/ 下的应用模块（menu, task_sched）
+ * - 间接依赖：drivers/ 和 system/ 通过 System_Init.h 初始化
  */
 
-#include "menu.h"
-#include "task_sched.h"
-#include "System_Init.h"
-#include "Micro_Timer.h"
-#include "hall_encoder.h"
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
+#include "menu.h"           // UI 菜单
+#include "task_sched.h"     // 任务调度
+#include "System_Init.h"    // 系统初始化（封装底层驱动）
+#include "system_config.h"  // 系统全局配置（包含 PID、速度等全局变量声明）
+#include "control.h"        // 控制算法（包含 Balance_Control_Loop 等）
+#include "hall_encoder.h"   // 霍尔编码器接口
+#include "BlueSerial.h"     // 蓝牙串口通信
+#include <string.h>         // 字符串处理
+#include <stdlib.h>         // 标准库
 
 void SystemClock_Config(void);
 
@@ -79,30 +41,29 @@ int main(void)
     /* 主循环 */
     while(1)
     {
-		/*蓝牙串口接收数据包处理*/
-		/*规定的数据包格式为：[数据1,数据2,数据3,...]*/
-		/*蓝牙串口接收数据包处理*/
-		/*规定的数据包格式为：[数据1,数据2,数据3,...]*/
-		if (BlueSerial_RxFlag == 1)		//如果收到数据包
+		/* 蓝牙串口接收数据处理 */
+		/* 数据包格式：[joystick,LH,LV,RH,RV] */
+		if (BlueSerial_RxFlag == 1)		// 如果收到数据包
 		{
-			char *Tag = strtok(BlueSerial_RxPacket, ",");	//提取数据1，定义为标签Tag
-		if (strcmp(Tag, "joystick") == 0)			//Tag为joystick，收到摇杆数据包
+			char *Tag = strtok(BlueSerial_RxPacket, ",");	// 提取数据标签
+			if (strcmp(Tag, "joystick") == 0)			// 摇杆数据包
 			{
-				int8_t LH = atoi(strtok(NULL, ","));		//提取数据2，定义为摇杆值LH
-				int8_t LV = atoi(strtok(NULL, ","));		//提取数据3，定义为摇杆值LV
-				int8_t RH = atoi(strtok(NULL, ","));		//提取数据4，定义为摇杆值RH
-				int8_t RV = atoi(strtok(NULL, ","));		//提取数据5，定义为摇杆值RV
+				int8_t LH = atoi(strtok(NULL, ","));		// 左手柄横向
+				int8_t LV = atoi(strtok(NULL, ","));		// 左手柄纵向 → 速度控制
+				int8_t RH = atoi(strtok(NULL, ","));		// 右手柄横向 → 转向控制
+				int8_t RV = atoi(strtok(NULL, ","));		// 右手柄纵向
 				
-				/*执行摇杆操作*/
-				speedPID.target = LV;	//摇杆值LV缩放后，控制速度环目标值，前后行进控制
-				turnPID.target = RH;		//摇杆值RH缩放后，控制转向环目标值，左右转弯控制
+				/* 执行摇杆操作 */
+				speedPID.target = LV;	// 前后行进控制
+				turnPID.target = RH;		// 左右转弯控制
 			}
 			
-			BlueSerial_RxFlag = 0;				//处理完成后，标志位置0，允许接收下一个数据包
+			BlueSerial_RxFlag = 0;		// 清除标志，准备接收下一个包
 		}
-		TaskHandler();                // 如按键扫描、状态机等
-		MyOLED_UI_MainLoop();         // UI 刷新	,这坑爹UI刷新居然要占35~40ms之久！
-        IWDG_ReloadCounter();         // 喂狗（必须高频调用！）        
+		
+		TaskHandler();                // 任务调度（按键扫描、状态机等）
+		MyOLED_UI_MainLoop();         // UI 刷新
+        IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
     }
 }
 

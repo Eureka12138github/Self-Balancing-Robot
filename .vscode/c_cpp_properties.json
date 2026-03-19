@@ -1,0 +1,88 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "D:/Embedded-related/项目/Balanced car (PIO)/lib/CMSIS",
+                "D:/Embedded-related/项目/Balanced car (PIO)/lib/STM32F10x_StdPeriph_Driver",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app/control",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app/storage",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app/system",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/config",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Communication",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Display",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Display/Fonts",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/IMU",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Input",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/LED",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Output",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Sensors",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/system/stm32f103c8t6_minidev",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/utils/PID",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/utils/buffer",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/utils/debug",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app/task",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app/ui/ui_content",
+                "D:/Embedded-related/项目/Balanced car (PIO)/src/app/ui/ui_framework",
+                "C:/Users/25602/.platformio/packages/framework-cmsis/CMSIS/Include",
+                "C:/Users/25602/.platformio/packages/framework-cmsis-stm32f1/Include",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "D:/Embedded-related/项目/Balanced car (PIO)/lib/CMSIS",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/lib/STM32F10x_StdPeriph_Driver",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app/control",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app/storage",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app/system",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/config",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Communication",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Display",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Display/Fonts",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/IMU",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Input",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/LED",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Output",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/drivers/Sensors",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/system/stm32f103c8t6_minidev",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/utils/PID",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/utils/buffer",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/utils/debug",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app/task",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app/ui/ui_content",
+                    "D:/Embedded-related/项目/Balanced car (PIO)/src/app/ui/ui_framework",
+                    "C:/Users/25602/.platformio/packages/framework-cmsis/CMSIS/Include",
+                    "C:/Users/25602/.platformio/packages/framework-cmsis-stm32f1/Include",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60119",
+                "STM32F103xB",
+                "STM32F1",
+                "USE_STDPERIPH_DRIVER",
+                "HSE_VALUE=8000000U",
+                "STM32F10X_MD",
+                "F_CPU=72000000L",
+                ""
+            ],
+            "compilerPath": "C:/Users/25602/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc.exe",
+            "compilerArgs": [
+                "-mthumb",
+                "-mcpu=cortex-m3",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
