@@ -16,6 +16,7 @@
 #include "control.h"        // 控制算法（包含 Balance_Control_Loop 等）
 #include "hall_encoder.h"   // 霍尔编码器接口
 #include "BlueSerial.h"     // 蓝牙串口通信
+#include "usart.h"          // 串口驱动（包含 USART_DEBUG 定义）
 #include <string.h>         // 字符串处理
 #include <stdlib.h>         // 标准库
 
@@ -36,6 +37,64 @@ int main(void)
 
     /* ===== 系统初始化 ===== */
     Initialize_System();
+
+    // 🔬 浮点格式化包装器测试 - 专门测试 Serial_Printf
+    Serial_Printf(USART_DEBUG, "\r\n");
+    Serial_Printf(USART_DEBUG, "========================================\r\n");
+    Serial_Printf(USART_DEBUG, "  Float Printf Wrapper Test\r\n");
+    Serial_Printf(USART_DEBUG, "  Testing Serial_Printf with %%f\r\n");
+    Serial_Printf(USART_DEBUG, "========================================\r\n");
+    Serial_Printf(USART_DEBUG, "\r\n");
+    
+    // 测试 1：基本格式
+    float test_val = 3.14159f;
+    Serial_Printf(USART_DEBUG, "[TEST 1] Basic %%%%f:\r\n");
+    Serial_Printf(USART_DEBUG, "  Default: %f\r\n", test_val);
+    Serial_Printf(USART_DEBUG, "  Precision .2f: %.2f\r\n", test_val);
+    Serial_Printf(USART_DEBUG, "  Precision .3f: %.3f\r\n", test_val);
+    
+    // 测试 2：符号标志
+    Serial_Printf(USART_DEBUG, "\r\n[TEST 2] Sign flags:\r\n");
+    Serial_Printf(USART_DEBUG, "  Positive +%%f: %+f\r\n", test_val);
+    Serial_Printf(USART_DEBUG, "  Negative +%%f: %+f\r\n", -test_val);
+    
+    // 测试 3：宽度和填充
+    Serial_Printf(USART_DEBUG, "\r\n[TEST 3] Width & padding:\r\n");
+    Serial_Printf(USART_DEBUG, "  Width 10: [%10f]\r\n", test_val);
+    Serial_Printf(USART_DEBUG, "  Left align: [%%-10f]\r\n", test_val);
+    Serial_Printf(USART_DEBUG, "  Zero pad: [%%010f]\r\n", test_val);
+    
+    // 测试 4：PID 参数显示（实际应用场景）
+    Serial_Printf(USART_DEBUG, "\r\n[TEST 4] PID parameters (real use case):\r\n");
+    float Kp = 2.5f, Ki = 0.1f, Kd = 0.05f;
+    Serial_Printf(USART_DEBUG, "  Kp: %+6.3f\r\n", Kp);
+    Serial_Printf(USART_DEBUG, "  Ki: %+6.3f\r\n", Ki);
+    Serial_Printf(USART_DEBUG, "  Kd: %+6.3f\r\n", Kd);
+    
+    // 测试 5：混合整数和浮点
+    Serial_Printf(USART_DEBUG, "\r\n[TEST 5] Mixed int + float:\r\n");
+    Delay_ms(500);
+    int count = 42;
+    float voltage = 3.7f;
+    Serial_Printf(USART_DEBUG, "  Count: %d, Voltage: %.2f V\r\n", count, voltage);
+    
+    // 分开测试，看看到底哪里出了问题
+    Serial_Printf(USART_DEBUG, "  Combined part1: %d devices ", count);
+    Serial_Printf(USART_DEBUG, "part2: @ ");
+    Serial_Printf(USART_DEBUG, "part3: %.1f", voltage);
+    Serial_Printf(USART_DEBUG, "part4: V\r\n");
+    
+    Delay_ms(500);   
+    // 测试 6：负数和零
+    Serial_Printf(USART_DEBUG, "\r\n[TEST 6] Negative and zero:\r\n");
+    Serial_Printf(USART_DEBUG, "  Negative: %f\r\n", -2.5f);
+    Serial_Printf(USART_DEBUG, "  Zero: %f\r\n", 0.0f);
+    Serial_Printf(USART_DEBUG, "  Very small: %.6f\r\n", 0.0001f);
+    
+    Serial_Printf(USART_DEBUG, "\r\n========================================\r\n");
+    Serial_Printf(USART_DEBUG, "  Test Complete! Check all values above.\r\n");
+    Serial_Printf(USART_DEBUG, "========================================\r\n");
+    Serial_Printf(USART_DEBUG, "\r\n");
 
     
     /* 主循环 */

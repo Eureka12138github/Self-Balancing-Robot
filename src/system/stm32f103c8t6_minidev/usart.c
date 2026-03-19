@@ -19,6 +19,9 @@
 
 #include "usart.h"
 #include "bsp_config.h"
+#include "float_printf_wrapper.h"  // ← 添加浮点格式化包装器
+#include <string.h>    // strncpy, strlen, strcpy
+#include <math.h>      // fabsf
 
 /* ======================== 类型定义 ======================== */
 
@@ -279,7 +282,7 @@ size_t Serial_SendArray(USART_TypeDef* USARTx, const uint8_t* Array, uint16_t Le
 }
 
 /**
- * @brief 发送以 '\0' 结尾的字符串（非阻塞）
+ * @brief 发送以 '\0' 结尾的字符串（阻塞式，确保全部发送）
  * @param USARTx 指向 USART 外设的基地址
  * @param String 指向字符串的指针
  * @return       实际成功发送的字符数
@@ -288,7 +291,10 @@ size_t Serial_SendString(USART_TypeDef* USARTx, const char* String)
 {
     size_t sent = 0;
     while (*String) {
-        if (Serial_SendByte(USARTx, (uint8_t)*String) != 0) break;
+        // 如果缓冲区满，等待直到有空闲
+        while (Serial_SendByte(USARTx, (uint8_t)*String) != 0) {
+            __NOP();  // 短暂等待
+        }
         sent++;
         String++;
     }
@@ -348,22 +354,138 @@ int _write(int file, char *ptr, int len)
 }
 
 /**
- * @brief 格式化打印字符串到指定串口（非阻塞）
+ * @brief 格式化打印字符串到指定串口（非阻塞）- 浮点安全版本
  * @param USARTx 指向 USART 外设的基地址
- * @param format 格式化字符串（支持 printf 风格）
+ * @param format 格式化字符串（支持 printf 风格，包括 %f）
  * @param ...    可变参数列表
  *
- * @note 内部缓冲区最大为 100 字节，超长内容将被截断
+ * @note 内部缓冲区最大为 200 字节，超长内容将被截断
+ *       自动检测并处理 %f 格式，绕过 Newlib-Nano 限制
  */
 void Serial_Printf(USART_TypeDef* USARTx, char* format, ...)
 {
-    char String[100];
-    va_list arg;
-    va_start(arg, format);
-    vsnprintf(String, sizeof(String), format, arg);
-    va_end(arg);
-    Serial_SendString(USARTx, String);
-	
+    // 使用浮点包装器自动处理 %f 格式
+    va_list args;
+    va_start(args, format);
+    
+    // 检查是否包含浮点格式说明符
+    if (Format_HasFloatSpecifier(format)) {
+        // 有 %f，使用包装器处理
+        char buffer[500];  // 增大缓冲区到 500 字节
+        int output_pos = 0;
+        
+        const char* p = format;
+        
+        while (*p && output_pos < sizeof(buffer) - 1) {
+            if (*p == '%') {
+                const char* start = p;
+                p++;
+                
+                // 跳过标志位
+                while (*p == '+' || *p == '-' || *p == ' ' || *p == '#' || *p == '0') {
+                    p++;
+                }
+                // 跳过宽度
+                while (*p >= '0' && *p <= '9') {
+                    p++;
+                }
+                // 跳过精度
+                if (*p == '.') {
+                    p++;
+                    while (*p >= '0' && *p <= '9') {
+                        p++;
+                    }
+                }
+                // 跳过长度修饰符
+                if (*p == 'l' || *p == 'h' || *p == 'L') {
+                    p++;
+                }
+                
+                if (*p == 'f') {
+                    // 浮点数格式
+                    float value = va_arg(args, double);
+                    
+                    char float_format[16];
+                    size_t fmt_len = p - start + 1;
+                    if (fmt_len < sizeof(float_format)) {
+                        strncpy(float_format, start, fmt_len);
+                        float_format[fmt_len] = '\0';
+                        
+                        char float_buffer[32];
+                        Float_Format(value, float_format, float_buffer, sizeof(float_buffer));
+                        
+                        int len = strlen(float_buffer);
+                        if (output_pos + len < sizeof(buffer) - 1) {
+                            strcpy(buffer + output_pos, float_buffer);
+                            output_pos += len;
+                        }
+                    }
+                } else {
+                    // 其他格式，简化处理
+                    char single_format[8];
+                    int fmt_len = p - start + 1;
+                    if (fmt_len < sizeof(single_format)) {
+                        strncpy(single_format, start, fmt_len);
+                        single_format[fmt_len] = '\0';
+                        
+                        char temp_buffer[64];
+                        switch (*p) {
+                            case 'd':
+                            case 'i':
+                                snprintf(temp_buffer, sizeof(temp_buffer), single_format, va_arg(args, int));
+                                break;
+                            case 'u':
+                                snprintf(temp_buffer, sizeof(temp_buffer), single_format, va_arg(args, unsigned int));
+                                break;
+                            case 'x':
+                            case 'X':
+                                snprintf(temp_buffer, sizeof(temp_buffer), single_format, va_arg(args, unsigned int));
+                                break;
+                            case 'c':
+                                snprintf(temp_buffer, sizeof(temp_buffer), single_format, va_arg(args, int));
+                                break;
+                            case 's':
+                                snprintf(temp_buffer, sizeof(temp_buffer), single_format, va_arg(args, char*));
+                                break;
+                            default:
+                                strncpy(temp_buffer, start, p - start + 1);
+                                temp_buffer[p - start + 1] = '\0';
+                                break;
+                        }
+                        
+                        int len = strlen(temp_buffer);
+                        if (output_pos + len < sizeof(buffer) - 1) {
+                            strcpy(buffer + output_pos, temp_buffer);
+                            output_pos += len;
+                        }
+                    }
+                }
+                p++;
+            } else {
+                // 普通字符，直接复制（但要检查边界）
+                if (output_pos < sizeof(buffer) - 1) {
+                    buffer[output_pos++] = *p;
+                }
+                p++;
+            }
+        }
+        
+        // 确保字符串正确终止
+        if (output_pos < sizeof(buffer)) {
+            buffer[output_pos] = '\0';
+        } else {
+            buffer[sizeof(buffer) - 1] = '\0';
+        }
+        
+        va_end(args);
+        Serial_SendString(USARTx, buffer);
+    } else {
+        // 没有 %f，直接使用 vsnprintf
+        char buffer[500];  // 增大到 500 字节
+        vsnprintf(buffer, sizeof(buffer), format, args);
+        va_end(args);
+        Serial_SendString(USARTx, buffer);
+    }
 }
 
 
