@@ -59,23 +59,29 @@ typedef struct {
  * @brief 菜单项结构体
  * 
  * 定义单个菜单项的所有属性和功能配置
+ * 
+ * ⚠️ 重要：成员顺序经过优化，确保指针类型连续排列，
+ * 减少内存对齐填充，提高初始化可靠性
  */
 typedef struct MyMenuItem {
-    const char* text;                    /**< 显示文本内容(支持格式化字符串) */
-    void (*callback)(void);              /**< 回调函数指针(确认键执行) */
-    struct MyMenuPage* submenu;          /**< 子菜单页面指针(用于页面跳转，优先级高于回调函数) */
-    int16_t* int16_Value;                 /**< 关联的16位数值变量指针 */
-    MenuItemType item_type;              /**< 菜单项类型(普通/返回等) */
+    const char* text;                    /**< 显示文本内容 (支持格式化字符串) */
+    void (*callback)(void);              /**< 回调函数指针 (确认键执行) */
+    struct MyMenuPage* submenu;          /**< 子菜单页面指针 (用于页面跳转，优先级高于回调函数) */
+    
+    // 数值绑定指针（连续排列，便于管理和初始化）
+    int16_t* int16_Value;                /**< 关联的 16 位数值变量指针 */
+    float* float_Value;                  /**< 关联的浮点数值变量指针 */
+    
+    MenuItemType item_type;              /**< 菜单项类型 (普通/返回等) */
  
     // 编辑配置
     MenuEditConfig* edit_config;         // 指向编辑参数（min/max/step）
     bool is_editing;                     // 当前是否处于编辑状态（运行时状态）
 	
     // 滚动相关字段
-    int16_t scroll_offset;               /**< 水平滚动偏移量(像素) */
-    int16_t text_width;                 /**< 文本宽度缓存(像素) */
+    int16_t scroll_offset;               /**< 水平滚动偏移量 (像素) */
+    int16_t text_width;                 /**< 文本宽度缓存 (像素) */
     bool is_scrolling;                   /**< 滚动状态标志 */
-		float* float_Value; 
 } MyMenuItem;
 
 /**

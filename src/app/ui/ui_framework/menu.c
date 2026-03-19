@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>  // 提供 strchr, strncpy 函数
 // 全局状态变量
 static MyMenuPage* g_current_page = NULL;
 
@@ -208,11 +209,11 @@ static MyMenuID GetMaxVisibleItems(void) {
  * 支持可变参数格式化字符串
  * 
  * @param ChineseFont 中文字体宽度（像素）
- * @param ASCIIFont ASCII字体宽度（像素）
+ * @param ASCIIFont ASCII 字体宽度（像素）
  * @param format 格式化字符串
  * @param ... 可变参数列表
  * @return int16_t 字符串总宽度（像素）
- * @note 自动识别UTF-8编码的中英文字符
+ * @note 自动识别 UTF-8 编码的中英文字符
  */
 static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const char *format, ...) {
     int16_t StringLength = 0;
@@ -220,7 +221,11 @@ static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const cha
 
     va_list args;
     va_start(args, format);
+    
+    // ⚠️ 注意：vsprintf 在 STM32 上默认不支持浮点数格式化
+    // 如果 format 包含 %f，需要启用 -Wl,-u,_printf_float 链接选项
     vsnprintf(String, sizeof(String), format, args);
+    
     va_end(args);
 
     char *ptr = String;
@@ -267,14 +272,19 @@ static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const cha
 static void InitScrollState(MyMenuItem* item) {
     if (item == NULL) return;
     
-	if(item->int16_Value != NULL) {
-		item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
-	}
-	if(item->float_Value != NULL) {
-		item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
-	}else {
-    item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text);	
-	}	
+    // 根据数值类型选择格式化方式计算文本宽度
+    if(item->float_Value != NULL) {
+        // float 类型优先处理（PID 参数等使用）
+        item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+    }
+    else if(item->int16_Value != NULL) {
+        // int16 类型
+        item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
+    }
+    else {
+        // 纯文本，无动态数值
+        item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text);	
+    }
 
     
     int16_t available_width = OLED_WIDTH - START_POINT_OF_TEXT_DISPLAY;
@@ -407,12 +417,40 @@ static void DisplayScrollingText(uint8_t x, uint8_t y, const MyMenuItem* item) {
     // 👇 关键：仅当文本与 [0, OLED_WIDTH) 区域有重叠时才绘制
     if (display_x < OLED_WIDTH && text_right_edge > 0) {
 		//新实现：长字符串流畅显示
-		if(item->int16_Value != NULL) {
-			OLED_PrintfMixArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
-		}else if(item->float_Value != NULL){
-			OLED_PrintfMixArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+		// float 类型优先处理（PID 参数等使用）
+        if(item->float_Value != NULL){
+			// ========== 手动格式化浮点数（绕过 vsprintf 限制）==========
+			float test_val = *item->float_Value;
+			char buffer[32];
+			int int_part = (int)test_val;
+			int frac_part = (int)((test_val - int_part) * 1000);  // 取小数部分 3 位
+			if (frac_part < 0) frac_part = -frac_part;  // 取绝对值
+			
+			// ⚠️ 关键：找到 item->text 中的冒号并提取前缀
+			const char *colon_pos = strchr(item->text, ':');
+			if (colon_pos != NULL) {
+				size_t prefix_len = colon_pos - item->text + 1;
+				char prefix[16];
+				strncpy(prefix, item->text, prefix_len);
+				prefix[prefix_len] = '\0';
+				snprintf(buffer, sizeof(buffer), "%s%+d.%03d", 
+				        prefix, int_part, frac_part);
+			} else {
+				snprintf(buffer, sizeof(buffer), "%s:%+d.%03d", 
+				        item->text, int_part, frac_part);
+			}
+			
+			// ⚠️ 关键：使用实际格式化后的字符串重新计算宽度，确保滚动正确
+			int16_t actual_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, buffer);
+			OLED_PrintfMixArea(display_x, y, actual_width, FONT_HEIGHT, display_x, y, 
+			                   OLED_16X16_FULL, OLED_8X16_HALF, buffer);
+		}
+		else if(item->int16_Value != NULL) {
+			OLED_PrintfMixArea(display_x, y, item->text_width, FONT_HEIGHT, display_x, y, 
+			                   OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
 		}else {
-			OLED_ShowMixStringArea(display_x, y, item->text_width,FONT_HEIGHT,display_x, y,item->text,OLED_16X16_FULL, OLED_8X16_HALF);
+			OLED_ShowMixStringArea(display_x, y, item->text_width, FONT_HEIGHT, display_x, y, 
+			                       item->text, OLED_16X16_FULL, OLED_8X16_HALF);
 		}	
     }
     // 否则：完全在左侧（text_right_edge <= 0）或完全在右侧（display_x >= OLED_WIDTH），跳过
@@ -423,8 +461,8 @@ static void DisplayScrollingText(uint8_t x, uint8_t y, const MyMenuItem* item) {
  * 
  * 统一处理菜单项的显示逻辑，包括前缀、滚动状态和数值显示
  * 
- * @param x 显示起始X坐标
- * @param y 显示Y坐标
+ * @param x 显示起始 X 坐标
+ * @param y 显示 Y 坐标
  * @param item 指向要显示的菜单项
  * @param is_active 是否为当前活动项
  * @note 集成了动态文本宽度检测和滚动状态管理
@@ -434,16 +472,22 @@ static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_acti
     bool is_dynamic_content = false;	
     uint8_t text_x = x + START_POINT_OF_TEXT_DISPLAY;
 	
-    if(item->int16_Value != NULL || item->float_Value != NULL) {
+    // 判断是否为动态内容
+    if(item->float_Value != NULL || item->int16_Value != NULL) {
 		is_dynamic_content = true;
 	}
-	
+    
     if (is_dynamic_content) {
 		int16_t new_width;
-		if(item->int16_Value != NULL) {
+		// float 类型优先处理（PID 参数等使用）
+		if(item->float_Value != NULL) {
+			new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+		}
+		else if(item->int16_Value != NULL) {
 			new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);		
 		}else {
-			new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
+			// 理论上不会到这里，防御性编程
+			new_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text);
 		}
 
         
@@ -463,12 +507,38 @@ static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_acti
     if (item->is_scrolling) {
         DisplayScrollingText(text_x, y, item);
     } else {
-        if (item->int16_Value != NULL) {
+        // 根据数值类型选择显示方式
+        if (item->float_Value != NULL) {
+            // float 类型（PID 参数使用）
+            // ========== 手动格式化浮点数（绕过 vsprintf 限制）==========
+            float test_val = *item->float_Value;
+            char buffer[32];
+            int int_part = (int)test_val;
+            int frac_part = (int)((test_val - int_part) * 1000);
+            if (frac_part < 0) frac_part = -frac_part;
+            
+            const char *colon_pos = strchr(item->text, ':');
+            if (colon_pos != NULL) {
+                size_t prefix_len = colon_pos - item->text + 1;
+                char prefix[16];
+                strncpy(prefix, item->text, prefix_len);
+                prefix[prefix_len] = '\0';
+                snprintf(buffer, sizeof(buffer), "%s%+d.%03d", 
+                        prefix, int_part, frac_part);
+            } else {
+                snprintf(buffer, sizeof(buffer), "%s:%+d.%03d", 
+                        item->text, int_part, frac_part);
+            }
+            
+            // ✅ 非滚动模式：直接显示完整字符串
+            OLED_ShowMixString(text_x, y, buffer, OLED_16X16_FULL, OLED_8X16_HALF);
+            
+        } else if (item->int16_Value != NULL) {
+            // int16 类型
             OLED_PrintfMix(text_x, y, OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->int16_Value);
-        } else if(item->float_Value != NULL) {
-			OLED_PrintfMix(text_x, y, OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
-		}else {
-            OLED_ShowMixString(text_x, y,item->text,OLED_16X16_FULL, OLED_8X16_HALF);
+        } else {
+            // 纯文本
+            OLED_ShowMixString(text_x, y, item->text, OLED_16X16_FULL, OLED_8X16_HALF);
         }
     }
 
