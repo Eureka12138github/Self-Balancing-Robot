@@ -23,6 +23,11 @@
 #include <math.h>      // fabsf
 #include <stdio.h>     // vsnprintf, snprintf
 
+// 串口命令解析器（新增）
+#if SERIAL_USE_USART1
+#include "serial_cmd.h"
+#endif
+
 /* ======================== 类型定义 ======================== */
 
 /**
@@ -898,6 +903,10 @@ static void serial_irq_handler(USART_TypeDef* USARTx)
         __disable_irq();
         circular_buf_put(handle->rx_cbuf, data); // 满则丢弃
         __enable_irq();
+
+        // ✅ 移除：不再在中断内处理命令解析
+        // 原因：避免在中断内调用 Serial_Printf 干扰 TX
+        // 改为在主循环中通过 Control_ProcessCommands() 处理
 
         USART_ClearITPendingBit(USARTx, USART_IT_RXNE);
     }

@@ -14,8 +14,8 @@
 #include "System_Init.h"    // 系统初始化（封装底层驱动）
 #include "system_config.h"  // 系统全局配置（包含 PID、速度等全局变量声明）
 #include "control.h"        // 控制算法（包含 Balance_Control_Loop 等）
+#include "serial_cmd.h"     // 串口命令解析
 #include "hall_encoder.h"   // 霍尔编码器接口
-#include "BlueSerial.h"     // 蓝牙串口通信
 #include "usart.h"          // 串口驱动（包含 USART_DEBUG 定义）
 #include <string.h>         // 字符串处理
 #include <stdlib.h>         // 标准库
@@ -39,32 +39,26 @@ int main(void)
 
     /* ===== 系统初始化 ===== */
     Initialize_System();
+    
+    /* 平衡控制模块初始化 */
+    Balance_Init();
+    
+    /* 串口命令解析器初始化 */
+    SerialCmd_Init();
 
     /* 主循环 */
     while(1)
     {
-		/* 蓝牙串口接收数据处理 */
-		/* 数据包格式：[joystick,LH,LV,RH,RV] */
-		if (BlueSerial_RxFlag == 1)		// 如果收到数据包
-		{
-			char *Tag = strtok(BlueSerial_RxPacket, ",");	// 提取数据标签
-			if (strcmp(Tag, "joystick") == 0)			// 摇杆数据包
-			{
-				// int8_t LH = atoi(strtok(NULL, ","));		// 左手柄横向
-				int8_t LV = atoi(strtok(NULL, ","));		// 左手柄纵向 → 速度控制
-				int8_t RH = atoi(strtok(NULL, ","));		// 右手柄横向 → 转向控制
-				// int8_t RV = atoi(strtok(NULL, ","));		// 右手柄纵向
-				
-				/* 执行摇杆操作 */
-				speedPID.target = LV;	// 前后行进控制
-				turnPID.target = RH;		// 左右转弯控制
-			}
-			
-			BlueSerial_RxFlag = 0;		// 清除标志，准备接收下一个包
-		}
-		
+        // ============ PID 调试数据输出 ============
+        Balance_SendTelemetry();
+            
 		TaskHandler();                // 任务调度（按键扫描、状态机等）
 		MyOLED_UI_MainLoop();         // UI 刷新
+        
+        // ============ 处理串口接收的 PID 参数命令 ============
+        // 放在最后，减少对遥测定时的影响
+        Control_ProcessCommands();
+        
         // IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
     }
 }
