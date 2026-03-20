@@ -154,17 +154,14 @@ void SysTick_Handler(void)
   * @param  None
   * @retval None
   */
-/*void PPP_IRQHandler(void)
-{
-}
+// void PPP_IRQHandler(void) {
+// }
 
-/*
-注意：实际使用的中断服务函数已在对应驱动文件中定义：
-- EXTI0_IRQHandler, EXTI1_IRQHandler -> rotary_encoder.c (已删除)
-- TIM1_UP_IRQHandler -> main.c
-- USART2_IRQHandler -> BlueSerial.c
-请勿在此重复定义，以免链接冲突！
-*/
+// 注意：实际使用的中断服务函数已在对应驱动文件中定义
+// - EXTI0_IRQHandler, EXTI1_IRQHandler -> rotary_encoder.c (已删除)
+// - TIM1_UP_IRQHandler -> main.c
+// - USART2_IRQHandler -> BlueSerial.c
+// 请勿在此重复定义，以免链接冲突
 
 /**
   * @}

@@ -47,19 +47,37 @@ void Delay_Init(void)
 }
 
 /**
- * @brief  微秒级阻塞延时（空循环实现）
+ * @brief  微秒级阻塞延时（基于 SysTick 精确实现）
  * @param  us: 延时时长，单位：微秒（μs）
- * @note   - 适用于短延时（建议 ≤ 1000μs）
- *         - 基于经验系数（72MHz 下 us * 10 ≈ 1μs），保守设计确保延时不短于请求值
- *         - 不依赖外设，可安全用于任何上下文（包括 ISR）
- *         - 精度受编译器优化等级影响，-O2 下通常足够用于 DHT11/I2C 等场景
+ * @note   - 基于 SysTick 计数器，精度高
+ *         - 适用于所有需要精确微秒延时的场景（如 DHT11、I2C 等）
+ *         - 不依赖编译器优化等级
  */
 void Delay_us(uint32_t us)
 {
     if (us == 0) return;
     
-    volatile uint32_t i;
-    for (i = 0; i < us * 10; i++);  // 保守系数：确保实际延时 ≥ 请求值
+    // 72MHz 下，每个计数 = 1/72 μs ≈ 0.0139 μs
+    // 需要的计数值 = us * 72
+    uint32_t start = SysTick->VAL;
+    uint32_t ticks_needed = us * 72;
+    
+    // 等待足够的计数
+    while (1) {
+        uint32_t current = SysTick->VAL;
+        uint32_t elapsed;
+        
+        // 计算经过的计数（处理回绕）
+        if (current < start) {
+            elapsed = start - current;
+        } else {
+            elapsed = start + (SysTick->LOAD - current) + 1;
+        }
+        
+        if (elapsed >= ticks_needed) {
+            break;
+        }
+    }
 }
 
 /**

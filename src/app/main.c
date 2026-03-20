@@ -16,8 +16,11 @@
 #include "control.h"        // 控制算法（包含 Balance_Control_Loop 等）
 #include "hall_encoder.h"   // 霍尔编码器接口
 #include "BlueSerial.h"     // 蓝牙串口通信
+#include "usart.h"          // 串口驱动（包含 USART_DEBUG 定义）
 #include <string.h>         // 字符串处理
 #include <stdlib.h>         // 标准库
+#include "Delay.h"
+
 
 void SystemClock_Config(void);
 
@@ -37,7 +40,6 @@ int main(void)
     /* ===== 系统初始化 ===== */
     Initialize_System();
 
-    
     /* 主循环 */
     while(1)
     {
@@ -48,10 +50,10 @@ int main(void)
 			char *Tag = strtok(BlueSerial_RxPacket, ",");	// 提取数据标签
 			if (strcmp(Tag, "joystick") == 0)			// 摇杆数据包
 			{
-				int8_t LH = atoi(strtok(NULL, ","));		// 左手柄横向
+				// int8_t LH = atoi(strtok(NULL, ","));		// 左手柄横向
 				int8_t LV = atoi(strtok(NULL, ","));		// 左手柄纵向 → 速度控制
 				int8_t RH = atoi(strtok(NULL, ","));		// 右手柄横向 → 转向控制
-				int8_t RV = atoi(strtok(NULL, ","));		// 右手柄纵向
+				// int8_t RV = atoi(strtok(NULL, ","));		// 右手柄纵向
 				
 				/* 执行摇杆操作 */
 				speedPID.target = LV;	// 前后行进控制
@@ -63,7 +65,7 @@ int main(void)
 		
 		TaskHandler();                // 任务调度（按键扫描、状态机等）
 		MyOLED_UI_MainLoop();         // UI 刷新
-        IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
+        // IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
     }
 }
 
@@ -180,5 +182,9 @@ void SystemClock_Config(void)
         while (RCC_GetSYSCLKSource() != 0x08)
         {
         }
+        
+        /* 【关键】更新 SystemCoreClock 变量为 72MHz */
+        SystemCoreClock = 72000000;  // 72MHz
+        
     }
 }

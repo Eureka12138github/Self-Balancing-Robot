@@ -19,7 +19,9 @@
 #include "system_config.h"
 #include "Motor.h"
 #include "MPU6050.h"
-#include "Delay.h"
+#include "delay.h"  // 使用定时器实现的精确延时
+#include "usart.h"  // 用于串口调试输出
+// #include "delay_verify.h"  // Delay_ms() 精度验证（测试已完成，已删除）
 /*============================================================================
  *                          测试回调函数实现
  *============================================================================*/
@@ -47,21 +49,19 @@ void Test_Callback_1(void) {
  * @note true=正在校准，false=校准完成/未校准
  */
 static volatile bool s_is_calibrating = false;
+
 /**
- * @brief 传感器自动校准回调函数（通过 UI 菜单触发）
+ * @brief 传感器校准回调函数（使用互补滤波后的角度）
  * 
- * @details
- * 用户操作流程：
- * 1. 将小车保持直立静止状态（重要！）
- * 2. 通过 UI 菜单进入"系统校准" → "执行校准"
- * 3. 此函数自动采集 100 次数据并计算平均值
- * 4. 校准结果自动保存到全局变量
- * 5. LED 闪烁提示校准状态
+ * 功能：采集静止状态下的陀螺仪零偏和加速度计角度零偏
+ * 校准流程：
+ * 1. 暂停小车运行
+ * 2. 连续采样 100 次互补滤波后的数据（5ms/次）
+ * 3. 计算平均值作为零偏
+ * 4. LED 闪烁 3 次提示完成
  * 
- * @note 
- * - 采样次数 N=100
- * - 校准期间会暂时关闭电机输出，确保安全
- * - 校准完成后需重启或重新使能 run_flag 才能继续运行
+ * @note 必须将小车放置在水平面上进行校准
+ * @warning 校准过程中严禁移动或触碰小车
  */
 void Calibration_Callback(void) {
     // 安全检查：防止重入
@@ -70,6 +70,9 @@ void Calibration_Callback(void) {
     }
     
     s_is_calibrating = true;
+ 
+   // 添加调试输出
+    // Serial_Printf(USART_DEBUG, "\r\n=== 开始校准 ===\r\n");
     
     // ==================== 步骤 1：安全准备 ====================
     
@@ -82,50 +85,80 @@ void Calibration_Callback(void) {
     Motor_SetSpeed(MOTOR_LEFT, 0);
     Motor_SetSpeed(MOTOR_RIGHT, 0);
     
+    // Serial_Printf(USART_DEBUG, "已关闭电机\r\n");
+    
     // ==================== 步骤 2：数据采集 ====================
     
     const uint8_t SAMPLE_COUNT = 100;  // 采样次数
     int32_t sum_gyro_y = 0;           // 陀螺仪 Y 轴累加和
-    float sum_angle_acc = 0.0f;       // 加速度计角度累加和
+    float sum_angle = 0.0f;           // 互补滤波后角度累加和
+    
+    // Serial_Printf(USART_DEBUG, "开始采样 %d 次...\r\n", SAMPLE_COUNT);
+    
+    // 声明外部变量（在 control.c 中定义）
+    extern int16_t GY;           // 校正后的陀螺仪 Y 值
+    extern float angle;          // 互补滤波后的融合角度
     
     for (uint8_t i = 0; i < SAMPLE_COUNT; i++) {
-				IWDG_ReloadCounter(); 
-        int16_t gyro_y_raw;
-        float angle_acc_raw;
+        IWDG_ReloadCounter(); 
         
-        // 读取传感器数据
-        Get_gy_angleAcc(&gyro_y_raw, &angle_acc_raw);
+        // ✅ 关键改进：使用控制循环中已经处理好的数据
+        // 这些数据已经减去了之前的零偏，更准确
+        sum_gyro_y += GY;
+        sum_angle += angle;  // 使用互补滤波后的角度
         
-        // 累加
-        sum_gyro_y += gyro_y_raw;
-        sum_angle_acc += angle_acc_raw;
+        // 每 10 次输出一次进度（调试用，已禁用）
+        // if (i % 10 == 0) {
+        //     Serial_Printf(USART_DEBUG, "进度：%d/100, GY=%d, angle=%.2f\r\n", 
+        //                  i, GY, angle);
+        // }
         
-        // 延时 5ms，模拟控制周期，避免采样过快
-        // 注意：此处不能使用中断等待，应使用简单延时
+        // 延时 5ms，与控制周期同步
         Delay_ms(5);
     }
     
+    // Serial_Printf(USART_DEBUG, "采样完成！\r\n");
+    
     // ==================== 步骤 3：计算平均值 ====================
     
+    // 计算陀螺仪零偏
+    // 原理：校准时小车静止，GY 应该为 0
+    // 所以零偏 = 采样平均值（这样 gy -= offset 后才为 0）
     g_gyro_y_offset = (int16_t)(sum_gyro_y / SAMPLE_COUNT);
-    g_angleAcc_offset = sum_angle_acc / SAMPLE_COUNT;
+    
+    // 计算角度零偏
+    // 原理：校准时小车直立，理论角度应该为 0
+    // 所以零偏 = 采样平均值（这样 angleAcc -= offset 后才为 0）
+    // ⚠️ 注意：这里不需要负号！
+    g_angleAcc_offset = sum_angle / SAMPLE_COUNT;
+    
+    // Serial_Printf(USART_DEBUG, "\r\n=== 校准结果 ===\r\n");
+    // Serial_Printf(USART_DEBUG, "GY 零偏：%d\r\n", g_gyro_y_offset);
+    // Serial_Printf(USART_DEBUG, "Angle 零偏：%.3f\r\n", g_angleAcc_offset);
+    // Serial_Printf(USART_DEBUG, "原始总和：GY=%ld, Angle=%.2f\r\n", 
+    //              (long)sum_gyro_y, sum_angle);
     
     // ==================== 步骤 4：反馈提示 ====================
     
+    // Serial_Printf(USART_DEBUG, "LED 开始闪烁...\r\n");
+    
     // LED 闪烁 3 次提示校准完成
+    // 采用"亮短灭长"模式，更容易肉眼分辨
     for (uint8_t k = 0; k < 3; k++) {
-				IWDG_ReloadCounter(); 
-        GPIOC->BRR = GPIO_Pin_13; // LED ON
-        Delay_ms(100);
-				GPIOC->BSRR = GPIO_Pin_13;       // LED OFF
-        Delay_ms(100);
+        IWDG_ReloadCounter(); 
+        GPIOC->BRR = GPIO_Pin_13;     // LED ON
+        Delay_ms(100);  // 亮 100ms
+        
+        GPIOC->BSRR = GPIO_Pin_13;    // LED OFF
+        Delay_ms(100);  // 灭 100ms
     }
+    
+    // Serial_Printf(USART_DEBUG, "=== 校准完成 ===\r\n");
     
     // ==================== 步骤 5：恢复状态 ====================
     
     // 恢复之前的运行标志（如果之前是运行的）
     if (s_prev_run_flag) {
-				GPIOC->BRR = GPIO_Pin_13; 
         run_flag = true;
     }
     

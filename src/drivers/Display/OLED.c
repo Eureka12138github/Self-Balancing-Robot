@@ -936,8 +936,30 @@ void OLED_ShowChinese(int16_t X, int16_t Y, const char *Chinese, uint8_t FontSiz
  * @param[in] format 指定要显示的格式化字符串，必须为ASCII码可见字符组成的字符串
  * @param[in] ... 格式化字符串参数列表
  * @note 调用此函数后，要想真正显示在屏幕上，还需调用更新函数
- * @note 支持标准printf格式化语法，如%d, %s, %f等
- * @warning 输出字符串长度不能超过MAX_STRING_LENGTH定义的最大值
+ * @note 支持标准 printf 格式化语法，如 %d, %s, %f 等
+ * @warning 输出字符串长度不能超过 MAX_STRING_LENGTH 定义的最大值
+ * 
+ * @section oled_printf_newlib_nano Newlib-Nano 环境下的浮点数限制
+ * 
+ * **重要：PlatformIO + CMSIS 框架使用 Newlib-Nano C 库**
+ * 
+ * - ❌ **%f 浮点格式不支持**：vsprintf() 会输出 "??" 或空字符串
+ * - ✅ **整数格式完全支持**：%d, %u, %x, %s, %c 等
+ * - 💡 **解决方案**：将浮点数转换为整数后显示
+ * 
+ * @code
+ * // 错误示例（Newlib-Nano 下无法显示）
+ * float voltage = 3.7f;
+ * OLED_Printf(0, 0, OLED_8X16, "Voltage: %.2fV", voltage);  // ❌ 显示异常
+ * 
+ * // 正确做法：手动转换
+ * float voltage = 3.7f;
+ * int volt_int = (int)(voltage * 100);  // 放大 100 倍
+ * OLED_Printf(0, 0, OLED_8X16, "Voltage: %d.%02dV", volt_int/100, volt_int%100);  // ✅
+ * @endcode
+ * 
+ * @note 其他平台（Keil MDK + MicroLIB、IAR 等）可能支持 vsprintf 的浮点格式
+ *       但在 STM32F103C8 + PlatformIO 环境下，必须使用整数转换方式
  */
 void OLED_Printf(int16_t X, int16_t Y, uint8_t FontSize, char *format, ...)
 {
@@ -990,8 +1012,9 @@ void OLED_ShowMixString(int16_t X, int16_t Y, const char *String, uint8_t Chines
  * @param[in] format 指定要显示的格式化字符串，必须为ASCII码可见字符组成的字符串
  * @param[in] ... 格式化字符串参数列表
  * @note 调用此函数后，要想真正显示在屏幕上，还需调用更新函数
- * @note 支持标准printf格式化语法，可处理包含中英文的格式化字符串
- * @warning 输出字符串长度不能超过MAX_STRING_LENGTH定义的最大值
+ * @note 支持标准 printf 格式化语法，可处理包含中英文的格式化字符串
+ * @warning 输出字符串长度不能超过 MAX_STRING_LENGTH 定义的最大值
+ * @note Newlib-Nano 限制：PlatformIO + CMSIS 环境使用 Newlib-Nano C 库，不支持 %f 浮点格式；需显示浮点数时请转换为整数处理
  */
 void OLED_PrintfMix(int16_t X, int16_t Y, uint8_t ChineseFontSize, uint8_t ASCIIFontSize, const char *format, ...)
 {
@@ -1230,8 +1253,9 @@ void OLED_ShowChineseArea(int16_t RangeX, int16_t RangeY, int16_t RangeWidth, in
  * @param[in] format 指定要显示的格式化字符串，必须为ASCII码可见字符组成的字符串
  * @param[in] ... 格式化字符串参数列表
  * @note 字符串只会在此指定区域内显示，超出区域的部分会被裁剪
- * @note 支持标准printf格式化语法
- * @warning 输出字符串长度不能超过MAX_STRING_LENGTH定义的最大值
+ * @note 支持标准 printf 格式化语法
+ * @warning 输出字符串长度不能超过 MAX_STRING_LENGTH 定义的最大值
+ * @note Newlib-Nano 限制：PlatformIO + CMSIS 环境使用 Newlib-Nano C 库，不支持 %f 浮点格式；需显示浮点数时请转换为整数处理
  */
 void OLED_PrintfArea(int16_t RangeX, int16_t RangeY, int16_t RangeWidth, int16_t RangeHeight, 
                     int16_t X, int16_t Y, uint8_t FontSize, char *format, ...)
@@ -1293,8 +1317,9 @@ void OLED_ShowMixStringArea(int16_t RangeX, int16_t RangeY, int16_t RangeWidth, 
  * @param[in] format 指定要显示的格式化字符串，必须为ASCII码可见字符组成的字符串
  * @param[in] ... 格式化字符串参数列表
  * @note 字符串只会在此指定区域内显示，超出区域的部分会被裁剪
- * @note 支持标准printf格式化语法，可处理包含中英文的格式化字符串
- * @warning 输出字符串长度不能超过MAX_STRING_LENGTH定义的最大值
+ * @note 支持标准 printf 格式化语法，可处理包含中英文的格式化字符串
+ * @warning 输出字符串长度不能超过 MAX_STRING_LENGTH 定义的最大值
+ * @note Newlib-Nano 限制：PlatformIO + CMSIS 环境使用 Newlib-Nano C 库，不支持 %f 浮点格式；需显示浮点数时请转换为整数处理
  */
 void OLED_PrintfMixArea(int16_t RangeX, int16_t RangeY, int16_t RangeWidth, int16_t RangeHeight,
                        int16_t X, int16_t Y, uint8_t ChineseFontSize, uint8_t ASCIIFontSize, 

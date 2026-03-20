@@ -214,6 +214,8 @@ static MyMenuID GetMaxVisibleItems(void) {
  * @param ... 可变参数列表
  * @return int16_t 字符串总宽度（像素）
  * @note 自动识别 UTF-8 编码的中英文字符
+ * @warning Newlib-Nano 限制：PlatformIO + CMSIS 环境下 vsnprintf 不支持 %f 浮点格式；
+ *         计算含浮点数的字符串宽度时，需先手动格式化为整数形式再传入
  */
 static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const char *format, ...) {
     int16_t StringLength = 0;
@@ -222,8 +224,6 @@ static int16_t CalcStringWidth(int16_t ChineseFont, int16_t ASCIIFont, const cha
     va_list args;
     va_start(args, format);
     
-    // ⚠️ 注意：vsprintf 在 STM32 上默认不支持浮点数格式化
-    // 如果 format 包含 %f，需要启用 -Wl,-u,_printf_float 链接选项
     vsnprintf(String, sizeof(String), format, args);
     
     va_end(args);
@@ -275,6 +275,8 @@ static void InitScrollState(MyMenuItem* item) {
     // 根据数值类型选择格式化方式计算文本宽度
     if(item->float_Value != NULL) {
         // float 类型优先处理（PID 参数等使用）
+        // ⚠️ 注意：此处 CalcStringWidth 内部使用 vsnprintf，在 Newlib-Nano 下不支持 %f
+        // 实际项目中已改为手动格式化浮点数为整数形式后再调用（见 DisplayScrollingText 函数）
         item->text_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, item->text, *item->float_Value);
     }
     else if(item->int16_Value != NULL) {

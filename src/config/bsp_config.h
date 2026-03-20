@@ -38,7 +38,7 @@
 /** @{ */
 #define DHT11_GPIO_PORT     GPIOB
 #define DHT11_GPIO_CLK      RCC_APB2Periph_GPIOB
-#define DHT11_PIN           GPIO_Pin_14         /*!< DHT11 数据引脚 (PB14) */
+#define DHT11_PIN           GPIO_Pin_5        /*!< DHT11 数据引脚 (PB5) */
 
 #define DHT11_HIGH()        GPIO_SetBits(DHT11_GPIO_PORT, DHT11_PIN)
 #define DHT11_LOW()         GPIO_ResetBits(DHT11_GPIO_PORT, DHT11_PIN)
