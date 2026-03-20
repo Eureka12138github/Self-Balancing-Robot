@@ -8,6 +8,7 @@
 #include "dht11.h"
 #include "delay.h"
 #include "bsp_config.h"
+#include "usart.h"  // 用于调试输出
 /**
  * @brief 将 DHT11 数据引脚配置为推挽输出模式
  * @note 用于主机发送复位信号和释放总线
@@ -166,28 +167,41 @@ uint8_t DHT11_Read_Byte(void)
  */
 bool DHT11_Read_Data(uint16_t *temp, uint16_t *humi)
 {
-    uint8_t buf[5];
-    uint8_t i;
+   uint8_t buf[5];
+   
+   // 【调试】开始读取
 
-    DHT11_Rst();
-    if (!DHT11_Check())
-    {
-        return false; // 无响应
-    }
+   // 步骤 1: 发送复位信号
 
-    // 读取 5 字节（40 位）数据
-    for (i = 0; i < 5; i++)
-    {
-        buf[i] = DHT11_Read_Byte();
-    }
+   DHT11_Rst();
+   
+   // 步骤 2: 检查 DHT11 响应
 
-    // 校验和验证
-    if ((buf[0] + buf[1] + buf[2] + buf[3]) == buf[4])
-    {
-        *humi = buf[0]; // 湿度整数部分
-        *temp = buf[2]; // 温度整数部分
-        return true;
-    }
+   if (!DHT11_Check())
+   {
 
-    return false; // 校验失败
+       return false; // 无响应
+   }
+
+
+   // 步骤 3: 读取 5 字节（40 位）数据
+
+   for (uint8_t i = 0; i < 5; i++)
+   {
+       buf[i] = DHT11_Read_Byte();
+   }
+
+
+   // 步骤 4: 校验和验证
+   uint8_t checksum = buf[0] + buf[1] + buf[2] + buf[3];
+
+   if (checksum == buf[4])
+   {
+       *humi = buf[0]; // 湿度整数部分
+       *temp = buf[2]; // 温度整数部分      
+       return true;
+   }  
+   
+   return false; // 校验失败
+   
 }

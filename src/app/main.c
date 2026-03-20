@@ -19,6 +19,8 @@
 #include "usart.h"          // 串口驱动（包含 USART_DEBUG 定义）
 #include <string.h>         // 字符串处理
 #include <stdlib.h>         // 标准库
+#include "Delay.h"
+
 
 void SystemClock_Config(void);
 
@@ -38,65 +40,6 @@ int main(void)
     /* ===== 系统初始化 ===== */
     Initialize_System();
 
-    // 🔬 浮点格式化包装器测试 - 专门测试 Serial_Printf
-    Serial_Printf(USART_DEBUG, "\r\n");
-    Serial_Printf(USART_DEBUG, "========================================\r\n");
-    Serial_Printf(USART_DEBUG, "  Float Printf Wrapper Test\r\n");
-    Serial_Printf(USART_DEBUG, "  Testing Serial_Printf with %%f\r\n");
-    Serial_Printf(USART_DEBUG, "========================================\r\n");
-    Serial_Printf(USART_DEBUG, "\r\n");
-    
-    // 测试 1：基本格式
-    float test_val = 3.14159f;
-    Serial_Printf(USART_DEBUG, "[TEST 1] Basic %%%%f:\r\n");
-    Serial_Printf(USART_DEBUG, "  Default: %f\r\n", test_val);
-    Serial_Printf(USART_DEBUG, "  Precision .2f: %.2f\r\n", test_val);
-    Serial_Printf(USART_DEBUG, "  Precision .3f: %.3f\r\n", test_val);
-    
-    // 测试 2：符号标志
-    Serial_Printf(USART_DEBUG, "\r\n[TEST 2] Sign flags:\r\n");
-    Serial_Printf(USART_DEBUG, "  Positive +%%f: %+f\r\n", test_val);
-    Serial_Printf(USART_DEBUG, "  Negative +%%f: %+f\r\n", -test_val);
-    
-    // 测试 3：宽度和填充
-    Serial_Printf(USART_DEBUG, "\r\n[TEST 3] Width & padding:\r\n");
-    Serial_Printf(USART_DEBUG, "  Width 10: [%10f]\r\n", test_val);
-    Serial_Printf(USART_DEBUG, "  Left align: [%%-10f]\r\n", test_val);
-    Serial_Printf(USART_DEBUG, "  Zero pad: [%%010f]\r\n", test_val);
-    
-    // 测试 4：PID 参数显示（实际应用场景）
-    Serial_Printf(USART_DEBUG, "\r\n[TEST 4] PID parameters (real use case):\r\n");
-    float Kp = 2.5f, Ki = 0.1f, Kd = 0.05f;
-    Serial_Printf(USART_DEBUG, "  Kp: %+6.3f\r\n", Kp);
-    Serial_Printf(USART_DEBUG, "  Ki: %+6.3f\r\n", Ki);
-    Serial_Printf(USART_DEBUG, "  Kd: %+6.3f\r\n", Kd);
-    
-    // 测试 5：混合整数和浮点
-    Serial_Printf(USART_DEBUG, "\r\n[TEST 5] Mixed int + float:\r\n");
-    Delay_ms(500);
-    int count = 42;
-    float voltage = 3.7f;
-    Serial_Printf(USART_DEBUG, "  Count: %d, Voltage: %.2f V\r\n", count, voltage);
-    
-    // 分开测试，看看到底哪里出了问题
-    Serial_Printf(USART_DEBUG, "  Combined part1: %d devices ", count);
-    Serial_Printf(USART_DEBUG, "part2: @ ");
-    Serial_Printf(USART_DEBUG, "part3: %.1f", voltage);
-    Serial_Printf(USART_DEBUG, "part4: V\r\n");
-    
-    Delay_ms(500);   
-    // 测试 6：负数和零
-    Serial_Printf(USART_DEBUG, "\r\n[TEST 6] Negative and zero:\r\n");
-    Serial_Printf(USART_DEBUG, "  Negative: %f\r\n", -2.5f);
-    Serial_Printf(USART_DEBUG, "  Zero: %f\r\n", 0.0f);
-    Serial_Printf(USART_DEBUG, "  Very small: %.6f\r\n", 0.0001f);
-    
-    Serial_Printf(USART_DEBUG, "\r\n========================================\r\n");
-    Serial_Printf(USART_DEBUG, "  Test Complete! Check all values above.\r\n");
-    Serial_Printf(USART_DEBUG, "========================================\r\n");
-    Serial_Printf(USART_DEBUG, "\r\n");
-
-    
     /* 主循环 */
     while(1)
     {
@@ -107,10 +50,10 @@ int main(void)
 			char *Tag = strtok(BlueSerial_RxPacket, ",");	// 提取数据标签
 			if (strcmp(Tag, "joystick") == 0)			// 摇杆数据包
 			{
-				int8_t LH = atoi(strtok(NULL, ","));		// 左手柄横向
+				// int8_t LH = atoi(strtok(NULL, ","));		// 左手柄横向
 				int8_t LV = atoi(strtok(NULL, ","));		// 左手柄纵向 → 速度控制
 				int8_t RH = atoi(strtok(NULL, ","));		// 右手柄横向 → 转向控制
-				int8_t RV = atoi(strtok(NULL, ","));		// 右手柄纵向
+				// int8_t RV = atoi(strtok(NULL, ","));		// 右手柄纵向
 				
 				/* 执行摇杆操作 */
 				speedPID.target = LV;	// 前后行进控制
@@ -122,7 +65,7 @@ int main(void)
 		
 		TaskHandler();                // 任务调度（按键扫描、状态机等）
 		MyOLED_UI_MainLoop();         // UI 刷新
-        IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
+        // IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
     }
 }
 
@@ -239,5 +182,9 @@ void SystemClock_Config(void)
         while (RCC_GetSYSCLKSource() != 0x08)
         {
         }
+        
+        /* 【关键】更新 SystemCoreClock 变量为 72MHz */
+        SystemCoreClock = 72000000;  // 72MHz
+        
     }
 }
