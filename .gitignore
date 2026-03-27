@@ -1,70 +1,35 @@
-# Keil MDK 工具生成的中间文件
-Objects/
-Listings/
-*.o
-*.axf
-*.hex
-*.bin
-*.map
-*.lst
-*.sct
-*.dep
-*.d
-*.lib
+# PlatformIO 构建产物
+.pio
 
-# Keil 项目临时文件
-*.uvprojx.backup
-*.uvoptx.backup
-*.uvproj.backup
+# VSCode 数据库和缓存
+.vscode/.browse.c_cpp.db*
+.vscode/ipch
+.vscode/UnityLinker.data
 
-# Debug 配置文件（通常不需要提交）
-DebugConfig/
+# 编译输出（可选忽略）
+# .vscode/c_cpp_properties.json
+# .vscode/launch.json
 
-# 临时文件和日志
-*.log
-*.tmp
-*.bak
-*~
-# Keil 特定文件
-*.scvd
-*.uvjou
-
-# Windows 系统文件
-Thumbs.db
+# 操作系统文件
 .DS_Store
+Thumbs.db
+desktop.ini
 
-# 构建系统临时文件
-Makefile.bak
-build/
-out/
-
-# IDE 临时文件
+# 编辑器临时文件
 *.swp
 *.swo
-*.swo.log
+*~
+.vscode/*.tmp
 
-# 其他常见忽略项
-__pycache__/
-*.pyc
-*.class
-*.jar
-*.exe
-*.dll
-*.so
-*.a
-*.dylib
+# 调试日志
+*.log
 
-# 忽略特定工具生成的文件
-# keilkill.bat
-# --no-multibyte-chars.txt
+# 备份文件
+*.bak
+*.backup
+*.old
 
-# 如果你不希望提交调试配置，也可以忽略
-# *.uvoptx
-# *.uvprojx
+# 报告生成（根据需要）
+reports/
 
-# 敏感配置文件（不要提交！）
-system_config.c
-system_config.h
-
-# 注意：如果你希望团队共享项目配置，请保留 project.uvprojx 和 project.uvoptx
-# 否则可以在这里注释掉上面这两行
+docs/
