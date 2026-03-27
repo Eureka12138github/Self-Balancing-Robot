@@ -20,7 +20,15 @@ typedef struct {
 	float out_min;      // 输出下限
 	float out_offset;   // 输出偏移
 	
-	// ============ 新增：调试与原子更新支持 ============
+	// ============ 高级优化参数 ============
+	bool use_incomplete_diff;  // 是否启用不完全微分
+	float diff_filter_coef;    // 微分滤波系数 (0~1, 越小滤波越强)
+	float diff_state;          // 微分滤波状态变量
+	bool use_variable_int;     // 是否启用变速积分
+	float int_slow_threshold;  // 慢积分阈值
+	float int_slow_coef;       // 慢积分系数 (0~1)
+	
+	// ============ 调试与原子更新支持 ============
 	uint32_t version;       // 参数版本号（用于检测变化）
 	bool pending_update;    // 待更新标志（双缓冲机制）
 	float Kp_new;           // 新 Kp 值（缓冲）
@@ -31,7 +39,14 @@ typedef struct {
 void PID_update(PID_t * pid);
 void PID_reset(PID_t *pid);
 
-// ============ 新增：参数安全更新接口 ============
+// ============ 高级优化功能初始化函数 ============
+void PID_InitAngleLoop(PID_t *pid, float Kp, float Ki, float Kd);
+void PID_InitSpeedLoop(PID_t *pid, float Kp, float Ki, float Kd);
+void PID_InitTurnLoop(PID_t *pid, float Kp, float Ki, float Kd);
+void PID_SetAngleDiffFilterCoef(PID_t *pid, float coef);
+void PID_SetAngleIntThreshold(PID_t *pid, float threshold);
+
+// ============ 参数安全更新接口 ============
 void PID_SetParams(PID_t *pid, float Kp, float Ki, float Kd);
 void PID_ApplyPendingParams(PID_t *pid);
 bool PID_HasPendingUpdate(PID_t *pid);

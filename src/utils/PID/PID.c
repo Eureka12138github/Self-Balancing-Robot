@@ -1,12 +1,145 @@
 #include "PID.h"                                                  
 #include <stddef.h>   // 确保包含标准类型定义，如果项目中已有可省略
-#include "stm32f10x.h"  // 添加 CMSIS 头文件以使用 __disable_irq/__enable_irq
+#include "stm32f10x.h"  // 添加 CMSIS 头文件以使用 __disable_irq/__enableirq
+#include <math.h>      // 用于 fabsf
+
+/**
+ * @brief 初始化直立环 PID 参数（推荐使用不完全微分 + 变速积分）
+ * @param pid: PID 结构体指针
+ * @param Kp: 比例系数
+ * @param Ki: 积分系数
+ * @param Kd: 微分系数
+ */
+void PID_InitAngleLoop(PID_t *pid, float Kp, float Ki, float Kd)
+{
+    if (pid == NULL) return;
+    
+    // 基础参数
+    pid->Kp = Kp;
+    pid->Ki = Ki;
+    pid->Kd = Kd;
+    
+    // 限幅设置
+    pid->out_offset = 0.0f;
+    
+    // 不完全微分配置（重点推荐）
+    pid->use_incomplete_diff = true;
+    pid->diff_filter_coef = 0.1f;        // 滤波系数：0.05~0.2
+    pid->diff_state = 0.0f;              // 状态清零
+    
+    // 变速积分配置
+    pid->use_variable_int = true;
+    pid->int_slow_threshold = 5.0f;      // 阈值：5 度
+    pid->int_slow_coef = 0.3f;           // 慢积分系数：0.2~0.5
+    
+    // 清零状态变量
+    pid->errorInt = 0.0f;
+    pid->error0 = 0.0f;
+    pid->error1 = 0.0f;
+    pid->actual_1 = 0.0f;
+    pid->out = 0.0f;
+}
+
+/**
+ * @brief 初始化速度环 PID 参数
+ * @param pid: PID 结构体指针
+ * @param Kp: 比例系数
+ * @param Ki: 积分系数
+ * @param Kd: 微分系数
+ */
+void PID_InitSpeedLoop(PID_t *pid, float Kp, float Ki, float Kd)
+{
+    if (pid == NULL) return;
+    
+    pid->Kp = Kp;
+    pid->Ki = Ki;
+    pid->Kd = Kd;
+    
+    // 速度环通常不需要不完全微分和变速积分
+    pid->use_incomplete_diff = false;
+    pid->use_variable_int = false;
+    pid->diff_state = 0.0f;
+    
+    pid->errorInt = 0.0f;
+    pid->error0 = 0.0f;
+    pid->error1 = 0.0f;
+    pid->actual_1 = 0.0f;
+    pid->out = 0.0f;
+}
+
+/**
+ * @brief 初始化转向环 PID 参数
+ * @param pid: PID 结构体指针
+ * @param Kp: 比例系数
+ * @param Ki: 积分系数
+ * @param Kd: 微分系数
+ */
+void PID_InitTurnLoop(PID_t *pid, float Kp, float Ki, float Kd)
+{
+    if (pid == NULL) return;
+    
+    pid->Kp = Kp;
+    pid->Ki = Ki;
+    pid->Kd = Kd;
+    
+    pid->use_incomplete_diff = false;
+    pid->use_variable_int = false;
+    pid->diff_state = 0.0f;
+    
+    pid->errorInt = 0.0f;
+    pid->error0 = 0.0f;
+    pid->error1 = 0.0f;
+    pid->actual_1 = 0.0f;
+    pid->out = 0.0f;
+}
+
+/**
+ * @brief 动态调整直立环微分滤波系数
+ * @param pid: PID 结构体指针
+ * @param coef 滤波系数 (0.01~0.3)
+ */
+void PID_SetAngleDiffFilterCoef(PID_t *pid, float coef)
+{
+    if (pid == NULL) return;
+    if (coef < 0.01f) coef = 0.01f;
+    if (coef > 0.3f) coef = 0.3f;
+    pid->diff_filter_coef = coef;
+    pid->use_incomplete_diff = true;
+}
+
+/**
+ * @brief 动态调整变速积分阈值
+ * @param pid: PID 结构体指针
+ * @param threshold 误差阈值（度）
+ */
+void PID_SetAngleIntThreshold(PID_t *pid, float threshold)
+{
+    if (pid == NULL) return;
+    if (threshold < 1.0f) threshold = 1.0f;
+    if (threshold > 20.0f) threshold = 20.0f;
+    pid->int_slow_threshold = threshold;
+    pid->use_variable_int = true;
+}
 
 void PID_update (PID_t * pid) {
 	pid->error1 = pid->error0;
 	pid->error0 = pid->target -  pid->actual;
-	if(pid->Ki != 0) {
-		pid->errorInt += pid->error0;
+	
+	// ============ 变速积分 ============
+	float current_Ki = pid->Ki;
+	if(pid->use_variable_int) {
+		// 误差大时积分慢，误差小时积分快
+		if(fabsf(pid->error0) > pid->int_slow_threshold) {
+			current_Ki = pid->Ki * pid->int_slow_coef;  // 慢积分
+		}
+	} else {
+		// ✅ 不启用变速积分时，直接使用原始 Ki
+		current_Ki = pid->Ki;
+	}
+	
+	// ============ 积分计算 ============
+	if(current_Ki != 0) {
+		pid->errorInt += pid->error0 * current_Ki;
 		if(pid->errorInt > pid->errorInt_max) {
 			pid->errorInt = pid->errorInt_max;
 		}
@@ -15,10 +148,27 @@ void PID_update (PID_t * pid) {
 		}
 	}else {pid->errorInt = 0;}
 
+    // ============ 微分计算（不完全微分） ============
+	float differential = 0.0f;
+	if(pid->use_incomplete_diff) {
+		// 一阶惯性滤波：y[n] = α*x[n] + (1-α)*y[n-1]
+		// x[n] 是原始微分，y[n] 是滤波后微分
+		float raw_diff = pid->actual - pid->actual_1;
+		pid->diff_state = pid->diff_filter_coef * raw_diff + 
+		                  (1.0f - pid->diff_filter_coef) * pid->diff_state;
+		differential = -pid->Kd * pid->diff_state;
+	} else {
+		// 标准微分先行
+		// ✅ 关键修复：不启用时也要清零 diff_state，防止累积
+		pid->diff_state = 0.0f;
+		differential = -pid->Kd * (pid->actual - pid->actual_1);
+	}
+	
+    // ============ PID 输出 ============
 	pid->out = pid->Kp * pid->error0 
-						 + pid->Ki * pid->errorInt 
-//						 + pid->Kd * (pid->error0 - pid->error1);
-						 + -pid->Kd * (pid->actual - pid->actual_1);//微分先行
+					 + pid->errorInt  // 注意：这里已经是积分后的值
+					 + differential;
+					 
 	//输出偏移
 	if(pid->out > 0) {pid->out += pid->out_offset;}
 	if(pid->out < 0) {pid->out -= pid->out_offset;}	

@@ -13,6 +13,26 @@
 #include <stddef.h>
 #include "menu_callbacks.h"
 #include "system_config.h"
+#include "control.h"  // 新增：用于获取监控数据
+
+// ========== 监控数据包装器（用于 UI 显示） ==========
+// 这些变量在每次菜单刷新时更新，提供对 control.c static 变量的访问
+
+static float g_monitor_angle = 0.0f;
+static float g_monitor_angleAcc = 0.0f;
+static float g_monitor_dif_speed = 0.0f;
+
+/**
+ * @brief 更新监控数据（在菜单主循环中调用）
+ */
+void Update_Monitor_Data(void) {
+    BalanceMonitor_t monitor;
+    Balance_GetMonitorData(&monitor);
+    
+    g_monitor_angle = monitor.angle;
+    g_monitor_angleAcc = monitor.angleAcc;
+    g_monitor_dif_speed = monitor.dif_speed;
+}
 
 /*
  * ==================== 使用说明 ====================
@@ -44,6 +64,19 @@
  */
 
 // ==================== Edit Configs ====================
+/**
+ * @brief PID parameter edit configs (stored in Flash, save RAM)
+ * 
+ * 直立环 PID 参数调试范围建议：
+ * - Kp: -20 ~ 20, step=1 (实际范围 0~20，负值用于调试)
+ * - Ki: -2 ~ 2, step=0.1 (直立环通常 Ki=0)
+ * - Kd: -20 ~ 50, step=1 (实际范围 0~50)
+ * 
+ * 调试步骤：
+ * 1. 先调 Kp：从 3.0 开始，每次 +0.5，直到出现小幅振荡
+ * 2. 再调 Kd：从 15 开始，每次 +2，直到振荡消失
+ * 3. 最后微调：Kp 和 Kd 配合，找到最佳平衡点
+ */
 /**
  * @brief PID parameter edit configs (stored in Flash, save RAM)
  */
@@ -139,7 +172,7 @@ MyMenuItem TurnPIDItems[] = {
         .callback    = NULL,
         .submenu     = NULL,
         .int16_Value = NULL,
-        .float_Value = &dif_speed,
+        .float_Value = &g_monitor_dif_speed,  // 使用包装器变量
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = NULL,
         .is_editing  = false,
@@ -341,7 +374,7 @@ MyMenuItem AnglePIDItems[] = {
         .callback    = NULL,
         .submenu     = NULL,
         .int16_Value = NULL,
-        .float_Value = &angle,
+        .float_Value = &g_monitor_angle,  // 使用包装器变量
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = NULL,
         .is_editing  = false,
@@ -488,7 +521,7 @@ MyMenuItem MonitorItems[] = {
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
         .int16_Value = NULL,              // 明确设置为 NULL
-        .float_Value = &angleAcc,         // 关联变量
+        .float_Value = &g_monitor_angleAcc,         // 关联包装器变量
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = NULL,
         .is_editing  = false,                     // 初始非编辑态
@@ -497,10 +530,10 @@ MyMenuItem MonitorItems[] = {
         .is_scrolling = false
     },
     {
-        .text        = "gy:%d",
+        .text        = "gy:?",
         .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
-        .int16_Value = &GY,              // 关联变量
+        .int16_Value = NULL,              // 关联变量
         .float_Value = NULL,             // 明确设置为 NULL
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = NULL,
@@ -511,7 +544,7 @@ MyMenuItem MonitorItems[] = {
     },		
     {
         .text        = "calibrate",
-        .callback    = Calibration_Callback,                      // 编辑模式下无需回调
+        .callback    = NULL,                      // 编辑模式下无需回调
         .submenu     = NULL,
         .int16_Value = NULL,
         .float_Value = NULL,
@@ -524,10 +557,10 @@ MyMenuItem MonitorItems[] = {
     },		
 		
 	{
-        .text        = "Speed_L:%d",
+        .text        = "Speed_L:?",
         .callback    = NULL,
         .submenu     = NULL,
-        .int16_Value = &g_rp_value1,
+        .int16_Value = NULL,
         .float_Value = NULL,
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = (MenuEditConfig*)&s_RP_edit_config,
@@ -538,10 +571,10 @@ MyMenuItem MonitorItems[] = {
     },
 	
     {
-        .text        = "Speed_R:%d",
+        .text        = "Speed_R:?",
         .callback    = NULL,
         .submenu     = NULL,
-        .int16_Value = &g_rp_value2,
+        .int16_Value = NULL,
         .float_Value = NULL,
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = (MenuEditConfig*)&s_RP_edit_config,
@@ -551,10 +584,10 @@ MyMenuItem MonitorItems[] = {
         .is_scrolling = false
     },
     {
-        .text        = "Left:%d",
+        .text        = "Left:?",
         .callback    = NULL,
         .submenu     = NULL,
-        .int16_Value = &g_rp_value3,
+        .int16_Value = NULL,
         .float_Value = NULL,
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = (MenuEditConfig*)&s_RP_edit_config,
@@ -565,10 +598,10 @@ MyMenuItem MonitorItems[] = {
     },	
 	
     {
-        .text        = "Right:%d",
+        .text        = "Right:?",
         .callback    = NULL,
         .submenu     = NULL,
-        .int16_Value = &g_rp_value4,
+        .int16_Value = NULL,
         .float_Value = NULL,
         .item_type   = MENU_ITEM_NORMAL,
         .edit_config = (MenuEditConfig*)&s_RP_edit_config,

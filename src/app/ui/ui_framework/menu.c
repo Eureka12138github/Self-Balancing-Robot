@@ -714,6 +714,9 @@ void MyOLED_UI_MainLoop(void) {
     static KeyEventType s_key_events[MAX_KEYS_NUM] = {KEY_EVENT_NONE};
     Key_GetEvent(s_key_events, MAX_KEYS_NUM);
 
+    // 【始终执行】更新监控数据（用于 UI 显示）
+    Update_Monitor_Data();
+
 
     // 【始终执行】处理按键事件
     if (s_key_events[0] == KEY_EVENT_CLICK) {

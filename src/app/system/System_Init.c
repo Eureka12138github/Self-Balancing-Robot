@@ -21,6 +21,7 @@
 #include "MPU6050.h"           // MPU6050 驱动
 #include "Delay.h"             // 延时函数
 #include "BlueSerial.h"        // 蓝牙串口
+#include "PID.h"               // PID 高级功能
 
 /**
  * @brief  初始化系统。
@@ -40,6 +41,8 @@ void Initialize_System(void) {
 	
 	LED_Init();
 	LED1_OFF();
-		
-
+	
+	// 初始化 PID 高级优化功能（不完全微分 + 变速积分）
+	// 注意：这里只是配置高级功能参数，基础 PID 参数已在 system_config.c 中初始化
+	// 如果需要动态调整，可以使用 PID_SetAngleDiffFilterCoef 等函数
 }

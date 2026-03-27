@@ -12,14 +12,7 @@
 #include "menu.h"           // UI 菜单
 #include "task_sched.h"     // 任务调度
 #include "System_Init.h"    // 系统初始化（封装底层驱动）
-#include "system_config.h"  // 系统全局配置（包含 PID、速度等全局变量声明）
-#include "control.h"        // 控制算法（包含 Balance_Control_Loop 等）
-#include "serial_cmd.h"     // 串口命令解析
-#include "hall_encoder.h"   // 霍尔编码器接口
-#include "usart.h"          // 串口驱动（包含 USART_DEBUG 定义）
-#include <string.h>         // 字符串处理
-#include <stdlib.h>         // 标准库
-#include "Delay.h"
+#include "control.h"        // 控制算法
 
 
 void SystemClock_Config(void);
@@ -42,23 +35,15 @@ int main(void)
     
     /* 平衡控制模块初始化 */
     Balance_Init();
-    
-    /* 串口命令解析器初始化 */
-    SerialCmd_Init();
 
     /* 主循环 */
     while(1)
     {
-        // ============ PID 调试数据输出 ============
-        Balance_SendTelemetry();
+
             
 		TaskHandler();                // 任务调度（按键扫描、状态机等）
 		MyOLED_UI_MainLoop();         // UI 刷新
-        
-        // ============ 处理串口接收的 PID 参数命令 ============
-        // 放在最后，减少对遥测定时的影响
-        Control_ProcessCommands();
-        
+              
         // IWDG_ReloadCounter();         // 喂狗（防止看门狗复位）        
     }
 }
@@ -66,35 +51,16 @@ int main(void)
 
 /* ======================== 中断服务函数 ======================== */
 
-void TIM1_UP_IRQHandler(void)//每5ms触发一次
-{		static uint16_t count1;
+void TIM1_UP_IRQHandler(void)//每 5ms 触发一次
+{
     if (TIM_GetITStatus(TIM1, TIM_IT_Update) != RESET)
     {
-			TaskSchedule(); 
-			Balance_Control_Loop();//这是直立环控制
-			count1++;
-			if(count1 >= 8) {//每隔5 * 8ms执行一次速度环控制
-				count1 = 0;
-				//44是电机极数，0.04是读取周期，9.27666是减速比，这个极数和减速比不同规格的电机应不一样
-				//这里是直接使用江协电机的数据，我的电机可能不是这个，将就用着先，这其实只是个比例转换
-				//即使不进行速度转换，应该也没问题。现在经过转换后单位为，转/秒
-				left_speed = Hall_Encoder_Get(ENCODER_LEFT) / 16.326816;// 44.0 * 0.04 * 9.27666
-				right_speed = Hall_Encoder_Get(ENCODER_RIGHT) / 16.326816;
-				ave_speed = (left_speed + right_speed ) / 2.0;
-				dif_speed = left_speed - right_speed;
-				if(run_flag) {
-					//速度环
-					speedPID.actual = ave_speed;
-					PID_update(&speedPID);
-					anglePID.target = speedPID.out;
-					
-					//转向环
-					turnPID.actual = dif_speed;
-					PID_update(&turnPID);
-					dif_PWM = turnPID.out;
-				}		
-			}
-			TIM_ClearITPendingBit(TIM1, TIM_IT_Update) ;
+        TaskSchedule(); 
+        
+        // ============ 调用平衡控制调度器 ============
+        Balance_Control_Scheduler();
+        
+        TIM_ClearITPendingBit(TIM1, TIM_IT_Update) ;
     }
 }
 

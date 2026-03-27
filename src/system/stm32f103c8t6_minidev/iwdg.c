@@ -89,76 +89,76 @@ void Display_Reset_Message(const char* message,const char* errortype) {
  * 2. 软件主动复位（调用 NVIC_SystemReset() 前已记录错误）→ 通过 ErrorTime[] 日志推断
  * 3. 正常上电或手动复位 → 无错误日志且非看门狗复位
  */
-void Check_Reset_Way(void) {
-    // 从存储加载复位计数
-    Reset_Count = Store_Data[RESET_TIMERS_STORE_IDX];
+// void Check_Reset_Way(void) {
+//     // 从存储加载复位计数
+//     // Reset_Count = Store_Data[RESET_TIMERS_STORE_IDX];
 
-    // 显示统一启动图标
-    OLED_ShowImageArea(0, 0, 63, 63, 0, 0, 64, 64, Sherry);
+//     // 显示统一启动图标
+//     OLED_ShowImageArea(0, 0, 63, 63, 0, 0, 64, 64, Sherry);
 
-    // ✅ 优先检查：是否为看门狗复位（主循环卡死）
-    if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET) {
-        // 看门狗复位：说明系统卡死，ErrorType() 未被执行
-        Reset_Count++;
-        Store_Data[RESET_TIMERS_STORE_IDX] = Reset_Count;
-        Store_Save();
+//     // ✅ 优先检查：是否为看门狗复位（主循环卡死）
+//     if (RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET) {
+//         // 看门狗复位：说明系统卡死，ErrorType() 未被执行
+//         Reset_Count++;
+//         Store_Data[RESET_TIMERS_STORE_IDX] = Reset_Count;
+//         Store_Save();
 
-        Display_Reset_Message("看门狗复位", "主循环卡死");
+//         Display_Reset_Message("看门狗复位", "主循环卡死");
 
-        // 清除复位标志，避免下次误判
-        RCC_ClearFlag();
-        return;
-    }
+//         // 清除复位标志，避免下次误判
+//         RCC_ClearFlag();
+//         return;
+//     }
 
-    // ✅ 其次检查：是否有软件主动记录的错误（NVIC_SystemReset 前调用 ErrorType）
-    u8 log_index = Store_Data[ERROR_LOG_STORE_IDX];
-    u8 err_type = 0;
+//     // ✅ 其次检查：是否有软件主动记录的错误（NVIC_SystemReset 前调用 ErrorType）
+//     u8 log_index = Store_Data[ERROR_LOG_STORE_IDX];
+//     u8 err_type = 0;
 
-    // 从最新写入位置的前一个开始回溯，找最近的有效错误
-    for (u8 i = 0; i < ERROR_TIME_ARRAY_SIZE; i++) {
-        u8 idx = (log_index + ERROR_TIME_ARRAY_SIZE - 1 - i) % ERROR_TIME_ARRAY_SIZE;
-        if (ErrorTime[idx].errortype != 0) {
-            err_type = ErrorTime[idx].errortype;
-            break;
-        }
-    }
+//     // 从最新写入位置的前一个开始回溯，找最近的有效错误
+//     for (u8 i = 0; i < ERROR_TIME_ARRAY_SIZE; i++) {
+//         u8 idx = (log_index + ERROR_TIME_ARRAY_SIZE - 1 - i) % ERROR_TIME_ARRAY_SIZE;
+//         if (ErrorTime[idx].errortype != 0) {
+//             err_type = ErrorTime[idx].errortype;
+//             break;
+//         }
+//     }
 
-    if (err_type != 0) {
-        // 软件主动复位，已有错误上下文
-        Reset_Count++;
-        Store_Data[RESET_TIMERS_STORE_IDX] = Reset_Count;
-        Store_Save();
+//     if (err_type != 0) {
+//         // 软件主动复位，已有错误上下文
+//         Reset_Count++;
+//         Store_Data[RESET_TIMERS_STORE_IDX] = Reset_Count;
+//         Store_Save();
 
-        const char* title = "异常复位";
-        const char* msg = "错误日志存在";
+//         const char* title = "异常复位";
+//         const char* msg = "错误日志存在";
         
-        // PlatformIO 迁移：以下错误码未定义，暂时使用默认消息
-        /*
-        switch (err_type) {
-            case ENV_COMM_DATA_TRANSMISSION_FAILURE:
-                msg = "无法发送！";
-                break;
-            case ENV_COMM_DATA_RECEPTION_FAILURE:
-                msg = "无法接收！";
-                break;
-            case ENV_SENSOR_DUST_ANOMALY:
-                msg = "扬尘异常！";
-                break;
-            case ENV_SENSOR_NOISE_ANOMALY:
-                msg = "噪音异常！";
-                break;
-            default:
-                msg = "其他错误";
-                break;
-        }
-        */
-        Display_Reset_Message(title, msg);
-        return;
-    }
+//         // PlatformIO 迁移：以下错误码未定义，暂时使用默认消息
+//         /*
+//         switch (err_type) {
+//             case ENV_COMM_DATA_TRANSMISSION_FAILURE:
+//                 msg = "无法发送！";
+//                 break;
+//             case ENV_COMM_DATA_RECEPTION_FAILURE:
+//                 msg = "无法接收！";
+//                 break;
+//             case ENV_SENSOR_DUST_ANOMALY:
+//                 msg = "扬尘异常！";
+//                 break;
+//             case ENV_SENSOR_NOISE_ANOMALY:
+//                 msg = "噪音异常！";
+//                 break;
+//             default:
+//                 msg = "其他错误";
+//                 break;
+//         }
+//         */
+//         Display_Reset_Message(title, msg);
+//         return;
+//     }
 
-    // ✅ 最后：无看门狗标志 + 无错误日志 → 视为正常启动
-    Display_Reset_Message("系统启动", " ");
-}
+//     // ✅ 最后：无看门狗标志 + 无错误日志 → 视为正常启动
+//     Display_Reset_Message("系统启动", " ");
+// }
 
 
 

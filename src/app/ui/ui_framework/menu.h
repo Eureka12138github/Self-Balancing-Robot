@@ -54,6 +54,9 @@ void MyOLED_UI_Init(MyMenuPage* page);
  */
 void MyOLED_UI_MainLoop(void);
 
+/** @brief 更新监控数据（在菜单主循环中调用） */
+void Update_Monitor_Data(void);
+
 #ifdef __cplusplus
 }
 #endif
