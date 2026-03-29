@@ -21,6 +21,7 @@
 #include "MPU6050.h"
 #include "delay.h"  // 使用定时器实现的精确延时
 #include "usart.h"  // 用于串口调试输出
+#include "menu_data.h"  // 提供 Save_PID_Params_ToFlash() 函数声明
 // #include "delay_verify.h"  // Delay_ms() 精度验证（测试已完成，已删除）
 /*============================================================================
  *                          测试回调函数实现
@@ -42,6 +43,50 @@ void Test_Callback_1(void) {
 		}else {
 			LED1_OFF();
 		}
+}
+
+/**
+ * @brief 保存 PID 参数到 Flash 的回调函数
+ * 
+ * 当用户在菜单中选择"保存参数"时执行
+ * 触发时机：用户导航到对应菜单项并按下 Enter 键
+ * 执行动作：调用 Save_PID_Params_ToFlash() 保存所有 PID 参数
+ * 
+ * 反馈机制：LED 闪烁 3 次提示保存成功（PC13）
+ */
+void Save_PID_Callback(void) {
+    // 保存到 Flash
+    Save_PID_Params_ToFlash();
+    
+    // LED 闪烁提示（3 次，亮短灭长模式）
+    for (uint8_t k = 0; k < 3; k++) {
+        GPIOC->BRR = GPIO_Pin_13;     // LED ON
+        Delay_ms(150);
+        GPIOC->BSRR = GPIO_Pin_13;    // LED OFF
+        Delay_ms(150);
+    }
+}
+
+/**
+ * @brief 重置 PID 参数为出厂默认值的回调函数
+ * 
+ * 当用户在菜单中选择"Reset PID"时执行
+ * 触发时机：用户导航到对应菜单项并按下 Enter 键
+ * 执行动作：调用 Reset_PID_Params_ToFlash() 重置并保存默认值
+ * 
+ * 反馈机制：LED 快速闪烁 5 次提示重置成功（区别于保存的 3 次）
+ */
+void Reset_PID_Callback(void) {
+    // 重置为默认值并保存到 Flash
+    Reset_PID_Params_ToFlash();
+    
+    // LED 闪烁提示（5 次，快速闪烁以示区别）
+    for (uint8_t k = 0; k < 5; k++) {
+        GPIOC->BRR = GPIO_Pin_13;     // LED ON
+        Delay_ms(100);
+        GPIOC->BSRR = GPIO_Pin_13;    // LED OFF
+        Delay_ms(100);
+    }
 }
 
 /** 

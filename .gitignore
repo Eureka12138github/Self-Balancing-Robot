@@ -1,35 +1,230 @@
+# ============================================================
 # PlatformIO 构建产物
-.pio
+# ============================================================
+.pio/
+.pioenvs/
+.piolibdeps/
+.piobuild/
 
-# VSCode 数据库和缓存
+# PlatformIO 临时文件和数据库
+.pio/libdeps/
+.pio/cache/
+
+# ============================================================
+# VSCode 配置文件
+# ============================================================
+# 数据库和缓存
 .vscode/.browse.c_cpp.db*
-.vscode/ipch
+.vscode/ipch/
 .vscode/UnityLinker.data
+.vscode/*.db
 
-# 编译输出（可选忽略）
-# .vscode/c_cpp_properties.json
+# 工作区数据（可选忽略）
+.vscode/.vscode/
+
+# 扩展推荐（建议保留，不忽略）
+# .vscode/extensions.json
+
+# 任务配置（建议保留，不忽略）
+# .vscode/tasks.json
+
+# 调试配置（建议保留，不忽略）
 # .vscode/launch.json
 
-# 操作系统文件
-.DS_Store
-Thumbs.db
-desktop.ini
+# C/C++ 属性配置（建议保留，不忽略）
+# .vscode/c_cpp_properties.json
 
 # 编辑器临时文件
+.vscode/*.tmp
+.vscode/*.log
+
+# ============================================================
+# 编译和链接产物
+# ============================================================
+# 目标文件和库
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+# 可执行文件和固件
+*.exe
+*.bin
+*.hex
+*.elf
+*.map
+*.lst
+*.srec
+
+# 中间文件
+*.d          # 依赖文件
+*.i          # 预处理文件
+*.s          # 汇编文件
+
+# 调试符号
+*.pdb
+*.idb
+*.ilk
+
+# ============================================================
+# Python 工具和脚本相关
+# ============================================================
+# Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Python 虚拟环境
+venv/
+env/
+.venv/
+.env/
+
+# Python 构建产物
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================================
+# 操作系统和编辑器文件
+# ============================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.Trash-*
+
+# 编辑器备份
 *.swp
 *.swo
+*swo*
 *~
-.vscode/*.tmp
-
-# 调试日志
-*.log
-
-# 备份文件
 *.bak
 *.backup
 *.old
 
-# 报告生成（根据需要）
-reports/
+# ============================================================
+# 日志和临时文件
+# ============================================================
+# 调试日志
+*.log
+logs/
 
-docs/
+# 临时报告（可选）
+reports/*.tmp
+reports/*.log
+
+# 技术文档应该保留版本控制
+# docs/  ← 已注释，保留 docs 目录
+
+# ============================================================
+# 第三方工具和 IDE
+# ============================================================
+# JetBrains IDE (CLion, etc.)
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Eclipse
+.project
+.settings/
+.cproject
+
+# Keil MDK
+*.uvopt*
+*.uvproj*
+*.uvmpw
+*.uvguix.*
+RTE/
+JLinkLog.txt
+JLinkSettings.ini
+
+# IAR Embedded Workbench
+*.eww
+*.ewp
+*.ewi
+*.dep
+*.dbgdt
+
+# ============================================================
+# 版本控制和其他
+# ============================================================
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# SVN
+.svn/
+
+# Mercurial
+.hg/
+
+# ============================================================
+# 特定于项目的忽略项
+# ============================================================
+# 通义灵码本地配置（如果存在）
+.lingma/mcp.json
+.lingma/cache/
+
+# 示例和模板文件（不编译的配置示例）
+src/app/control/control_kalman_example.c
+src/config/system_config_example.c
+
+# 硬件抽象层排除的文件
+src/drivers/Input/rotary_encoder.c
+src/system/stm32f103c8t6_minidev/delay_tim.c
+
+# 图片资源（如果需要忽略）
+# *.jpg
+# *.png
+# *.gif
+
+# 取模配置（当前保留）
+# 取模配置.jpg
+
+# ============================================================
+# 敏感信息（强烈建议忽略）
+# ============================================================
+# API Keys 和令牌
+*.key
+*.secret
+*.token
+credentials
+secrets/
+
+# 个人配置
+local_config.h
+personal_settings.h
+
+# ============================================================
+# 大型二进制文件（可选）
+# ============================================================
+# 如果 Flash 或 SRAM 镜像文件很大
+*.dfu
+*.uf2
+
+# AI生成的报告
+reports/

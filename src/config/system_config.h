@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "PID.h"
+#include "kalman.h"
 
 /*============================================================================
  *                          OLED MENU 配置
@@ -79,8 +80,11 @@ extern PID_t speedPID;
 extern PID_t turnPID;
 
 /** @brief 传感器校准参数 */
-extern int16_t g_gyro_y_offset;
-extern float g_angleAcc_offset;
+extern int16_t g_gyro_y_offset;      // Gyro Y-axis bias
+extern float g_angleAcc_offset;      // Accelerometer angle offset
+
+/** @brief 卡尔曼滤波器实例 */
+extern kalman_t g_kalman;            // Kalman filter for sensor fusion
 
 /*============================================================================
  *                      平衡控制算法配置参数

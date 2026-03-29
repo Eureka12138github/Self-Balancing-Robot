@@ -14,6 +14,7 @@
 #include "menu_callbacks.h"
 #include "system_config.h"
 #include "control.h"  // 新增：用于获取监控数据
+#include "storage.h"  // 新增：用于 PID 参数 Flash 存储
 
 // ========== 监控数据包装器（用于 UI 显示） ==========
 // 这些变量在每次菜单刷新时更新，提供对 control.c static 变量的访问
@@ -32,6 +33,66 @@ void Update_Monitor_Data(void) {
     g_monitor_angle = monitor.angle;
     g_monitor_angleAcc = monitor.angleAcc;
     g_monitor_dif_speed = monitor.dif_speed;
+}
+
+/**
+ * @brief 保存当前 PID 参数到 Flash（用户通过 UI 调整后调用）
+ * 
+ * 调用时机：
+ * - 用户通过 OLED 菜单调整 PID 参数后，长按 Enter 确认时
+ * - 校准完成后自动保存
+ * 
+ * @note 保存到 Flash 是整页操作，应避免频繁调用（建议间隔>1 秒）
+ */
+void Save_PID_Params_ToFlash(void)
+{
+    // 保存直立环 PID
+    PID_Store_Save(&anglePID, PID_ANGLE_KP_IDX);
+    // 保存速度环 PID
+    PID_Store_Save(&speedPID, PID_SPEED_KP_IDX);
+    // 保存转向环 PID
+    PID_Store_Save(&turnPID, PID_TURN_KP_IDX);
+    
+    // 批量写入 Flash（只调用一次 Store_Save，减少磨损）
+    Store_Save();
+}
+
+/**
+ * @brief 重置 PID 参数为出厂默认值并保存到 Flash
+ * 
+ * 调用时机：
+ * - 用户通过 OLED 菜单选择"Reset PID"时
+ * 
+ * 功能：
+ * 1. 清除 Flash 中存储的 PID 参数（调用 PID_Store_Clear）
+ * 2. 将 system_config.c 中定义的默认值重新加载到内存变量
+ * 3. 保存到 Flash 确保重启后依然生效
+ * 
+ * @note 此操作会触发一次完整的 Flash 写入，应避免频繁调用
+ */
+void Reset_PID_Params_ToFlash(void)
+{
+    // 步骤 1：清除 Flash 中的 PID 参数（清零）
+    PID_Store_Clear(PID_ANGLE_KP_IDX);
+    PID_Store_Clear(PID_SPEED_KP_IDX);
+    PID_Store_Clear(PID_TURN_KP_IDX);
+    
+    // 步骤 2：重新加载默认值（从 system_config.c 中的初始化值）
+    // 注意：这些默认值已在 system_config.c 中定义
+    anglePID.Kp = 3.6f;
+    anglePID.Ki = 0.0f;
+    anglePID.Kd = 18.0f;
+    
+    speedPID.Kp = 1.35f;
+    speedPID.Ki = 0.006f;
+    speedPID.Kd = 0.0f;
+    
+    turnPID.Kp = 0.12f;
+    turnPID.Ki = 0.580f;
+    turnPID.Kd = 0.0f;
+    
+    // 步骤 3：保存到 Flash（批量写入，只调用一次 Store_Save）
+    Store_Save();
 }
 
 /*
@@ -65,49 +126,52 @@ void Update_Monitor_Data(void) {
 
 // ==================== Edit Configs ====================
 /**
- * @brief PID parameter edit configs (stored in Flash, save RAM)
+ * @brief PID parameter edit configs
+ * 
+ * ⚠️ 关键说明：
+ * - menu.c 中的 MyOLED_Process_Value_Edit() 使用 step * 0.001 作为实际步长
+ * - 因此这里 step=100 表示实际调整 0.100
+ * - step=10 表示实际调整 0.010（精细调节）
  * 
  * 直立环 PID 参数调试范围建议：
- * - Kp: -20 ~ 20, step=1 (实际范围 0~20，负值用于调试)
- * - Ki: -2 ~ 2, step=0.1 (直立环通常 Ki=0)
- * - Kd: -20 ~ 50, step=1 (实际范围 0~50)
+ * - Kp: 0 ~ 20, step=100 (每次±0.1)
+ * - Ki: 0 ~ 2, step=10 (每次±0.01，精细调节)
+ * - Kd: 0 ~ 50, step=100 (每次±0.1)
  * 
  * 调试步骤：
  * 1. 先调 Kp：从 3.0 开始，每次 +0.5，直到出现小幅振荡
  * 2. 再调 Kd：从 15 开始，每次 +2，直到振荡消失
  * 3. 最后微调：Kp 和 Kd 配合，找到最佳平衡点
  */
-/**
- * @brief PID parameter edit configs (stored in Flash, save RAM)
- */
+
 static const MenuEditConfig s_RP_edit_config = {
-    .min  = -50,
-    .max  = 50,
-    .step = 1
+    .min  = -50000,   // -50.000
+    .max  = 50000,    // +50.000
+    .step = 100       // 0.100 步长
 };
 
 static const MenuEditConfig s_PID_Kp_edit_config = {
-    .min  = -20,
-    .max  = 20,
-    .step = 1
+    .min  = -20000,   // -20.000
+    .max  = 20000,    // +20.000
+    .step = 100       // 0.100 步长（粗调）
 };
 
 static const MenuEditConfig s_PID_Ki_edit_config = {
-    .min  = -2,
-    .max  = 2,
-    .step = 1
+    .min  = -2000,    // -2.000
+    .max  = 2000,     // +2.000
+    .step = 10        // 0.010 步长（精细调节）
 };
 
 static const MenuEditConfig s_PID_Kd_edit_config = {
-    .min  = -20,
-    .max  = 50,
-    .step = 1
+    .min  = -20000,   // -20.000
+    .max  = 50000,    // +50.000
+    .step = 100       // 0.100 步长（粗调）
 };
 
 static const MenuEditConfig s_PID_Target_edit_config = {
-    .min  = -1000,
-    .max  = 1000,
-    .step = 1
+    .min  = -1000000,  // -1000.000
+    .max  = 1000000,   // +1000.000
+    .step = 100        // 0.100 步长
 };
 
 // ==================== Turn PID Submenu Items ====================
@@ -494,6 +558,34 @@ MyMenuItem SettingsItems[] = {
         .text         = "Angle PID",
         .callback     = NULL,
         .submenu      = &AnglePIDPage,   // 指向直立环 PID 子页面
+        .int16_Value  = NULL,
+        .item_type    = MENU_ITEM_NORMAL,
+        .edit_config  = NULL,
+        .is_editing   = false,
+        .scroll_offset= 0,
+        .text_width   = 0,
+        .is_scrolling = false
+    },
+
+    // PID 参数保存功能
+    {
+        .text         = "Save param",
+        .callback     = Save_PID_Callback,
+        .submenu      = NULL,
+        .int16_Value  = NULL,
+        .item_type    = MENU_ITEM_NORMAL,
+        .edit_config  = NULL,
+        .is_editing   = false,
+        .scroll_offset= 0,
+        .text_width   = 0,
+        .is_scrolling = false
+    },
+
+    // PID 参数重置功能（恢复出厂设置）
+    {
+        .text         = "Reset PID",
+        .callback     = Reset_PID_Callback,
+        .submenu      = NULL,
         .int16_Value  = NULL,
         .item_type    = MENU_ITEM_NORMAL,
         .edit_config  = NULL,
