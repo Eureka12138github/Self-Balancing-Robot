@@ -39,8 +39,7 @@ int main(void)
     /* 主循环 */
     while(1)
     {
-
-            
+   
 		TaskHandler();                // 任务调度（按键扫描、状态机等）
 		MyOLED_UI_MainLoop();         // UI 刷新
               

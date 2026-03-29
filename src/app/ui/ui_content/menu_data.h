@@ -28,8 +28,17 @@ extern MyMenuPage SettingsPage;
 extern MyMenuPage MonitorPage;
 extern MyMenuPage MorePage;
 
-MyMenuID GetMainItemsCount(void);	
-	
+MyMenuID GetMainItemsCount(void);
+
+/** @brief 更新监控数据（在菜单主循环中调用） */
+void Update_Monitor_Data(void);
+
+/** @brief 保存 PID 参数到 Flash（用户调整后调用） */
+void Save_PID_Params_ToFlash(void);
+
+/** @brief 重置 PID 参数为出厂默认值并保存到 Flash */
+void Reset_PID_Params_ToFlash(void);
+
 #ifdef __cplusplus
 }
 #endif

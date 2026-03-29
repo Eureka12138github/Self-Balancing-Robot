@@ -75,4 +75,7 @@ int16_t g_gyro_y_offset;
 /** @brief 加速度计角度零偏（由 UI 菜单校准） */
 float g_angleAcc_offset;
 
+/** @brief 卡尔曼滤波器实例（全局共享） */
+kalman_t g_kalman;
+
 

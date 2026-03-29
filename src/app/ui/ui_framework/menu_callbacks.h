@@ -5,5 +5,7 @@
 
 void Test_Callback_1(void);
 void Calibration_Callback(void);
+void Save_PID_Callback(void);          // 保存 PID 参数回调
+void Reset_PID_Callback(void);         // 重置 PID 参数回调
 
 #endif

@@ -22,12 +22,39 @@
 #include "Delay.h"             // 延时函数
 #include "BlueSerial.h"        // 蓝牙串口
 #include "PID.h"               // PID 高级功能
+#include "storage.h"           // Flash 存储管理（新增）
 
 /**
  * @brief  初始化系统。
  * @retval None
  */
 void Initialize_System(void) {
+    // ========== 第一阶段：Flash 存储初始化 ==========
+    // 必须在所有硬件初始化之前调用，确保 PID 参数加载到内存
+    Store_Init();
+    
+    // ========== 第二阶段：加载持久化的 PID 参数 ==========
+    // 从 Flash 读取上次保存的 PID 参数（如果数据有效）
+    // 这样设备重启后能自动应用上次的参数，而不是重置为默认值
+    {
+        // 加载直立环 PID 参数
+        if (!PID_Store_Load(&anglePID, PID_ANGLE_KP_IDX)) {
+            // 如果加载失败（数据无效），保持 system_config.c 中的默认值
+            // 可选：添加调试输出或 LED 提示
+        }
+        
+        // 加载速度环 PID 参数
+        if (!PID_Store_Load(&speedPID, PID_SPEED_KP_IDX)) {
+            // 加载失败，保持默认值
+        }
+        
+        // 加载转向环 PID 参数
+        if (!PID_Store_Load(&turnPID, PID_TURN_KP_IDX)) {
+            // 加载失败，保持默认值
+        }
+    }
+    
+    // ========== 第三阶段：硬件和 UI 初始化 ==========
     MyOLED_UI_Init(&MainPage);        				// MainPage 在 my_menu_data.h 中定义	
     Alarm_Init();									//警报初始化
 	Usart1_Init(9600);  // 初始化调试串口

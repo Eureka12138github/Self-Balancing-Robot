@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>  // 提供 strchr, strncpy 函数
+#include <math.h>    // 提供 roundf, fabsf 函数（用于浮点数格式化）
 // 全局状态变量
 static MyMenuPage* g_current_page = NULL;
 
@@ -424,23 +425,60 @@ static void DisplayScrollingText(uint8_t x, uint8_t y, const MyMenuItem* item) {
 			// ========== 手动格式化浮点数（绕过 vsprintf 限制）==========
 			float test_val = *item->float_Value;
 			char buffer[32];
-			int int_part = (int)test_val;
-			int frac_part = (int)((test_val - int_part) * 1000);  // 取小数部分 3 位
-			if (frac_part < 0) frac_part = -frac_part;  // 取绝对值
 			
-			// ⚠️ 关键：找到 item->text 中的冒号并提取前缀
+			// ✅ 关键修复：先取绝对值，再分离整数和小数部分，最后恢复符号
+			// 问题根源：-0.1 向零取整得 0，剩余 -0.1，导致混乱
+			// 正确方案：
+			//   1. 记录符号
+			//   2. 取绝对值计算
+			//   3. 只对整数部分应用符号
+			//   4. 小数部分始终为正
+			
+			int int_part;
+			int frac_part;
+			
+			// 步骤 1：记录符号并取绝对值
+			bool is_negative = (test_val < 0.0f);
+			float abs_val = fabsf(test_val);
+			
+			// 步骤 2：对正数进行整数/小数分解
+			int_part = (int)abs_val;  // 截断取整
+			frac_part = (int)roundf((abs_val - int_part) * 1000.0f);
+			
+			// 步骤 3：处理进位（如 0.9999 → 1.000）
+			if (frac_part >= 1000) {
+				frac_part = 0;
+				int_part += 1;
+			}
+			
+			// ⚠️ 关键修复：不能直接对 int_part 应用负号（因为 -0 = 0）
+			// 需要在格式化字符串时显式添加负号
+			
+			// 步骤 4：找到 item->text 中的冒号并提取前缀
 			const char *colon_pos = strchr(item->text, ':');
+			char prefix[16];
 			if (colon_pos != NULL) {
 				size_t prefix_len = colon_pos - item->text + 1;
-				char prefix[16];
 				strncpy(prefix, item->text, prefix_len);
 				prefix[prefix_len] = '\0';
-				snprintf(buffer, sizeof(buffer), "%s%+d.%03d", 
-				        prefix, int_part, frac_part);
 			} else {
-				snprintf(buffer, sizeof(buffer), "%s:%+d.%03d", 
-				        item->text, int_part, frac_part);
+				snprintf(prefix, sizeof(prefix), "%s:", item->text);
 			}
+			
+			// 步骤 5：格式化数值（带符号）- 强制显示正负号前缀
+			char value_buffer[20];
+			if (is_negative && int_part == 0 && frac_part > 0) {
+				// 特殊处理 -0.xxx 的情况
+				snprintf(value_buffer, sizeof(value_buffer), "-%d.%03d", int_part, frac_part);
+			} else if (is_negative) {
+				snprintf(value_buffer, sizeof(value_buffer), "%d.%03d", -int_part, frac_part);
+			} else {
+				// ✅ 正数：强制显示 '+' 号前缀，保持格式统一
+				snprintf(value_buffer, sizeof(value_buffer), "+%d.%03d", int_part, frac_part);
+			}
+			
+			// 步骤 6：组合前缀和数值
+			snprintf(buffer, sizeof(buffer), "%s%s", prefix, value_buffer);
 			
 			// ⚠️ 关键：使用实际格式化后的字符串重新计算宽度，确保滚动正确
 			int16_t actual_width = CalcStringWidth(OLED_16X16_FULL, OLED_8X16_HALF, buffer);
@@ -515,22 +553,53 @@ static void DisplayMenuItem(uint8_t x, uint8_t y, MyMenuItem* item, bool is_acti
             // ========== 手动格式化浮点数（绕过 vsprintf 限制）==========
             float test_val = *item->float_Value;
             char buffer[32];
-            int int_part = (int)test_val;
-            int frac_part = (int)((test_val - int_part) * 1000);
-            if (frac_part < 0) frac_part = -frac_part;
             
+            // ✅ 关键修复：先取绝对值，再分离整数和小数部分，最后恢复符号
+            int int_part;
+            int frac_part;
+            
+            // 步骤 1：记录符号并取绝对值
+            bool is_negative = (test_val < 0.0f);
+            float abs_val = fabsf(test_val);
+            
+            // 步骤 2：对正数进行整数/小数分解
+            int_part = (int)abs_val;  // 截断取整
+            frac_part = (int)roundf((abs_val - int_part) * 1000.0f);
+            
+            // 步骤 3：处理进位（如 0.9999 → 1.000）
+            if (frac_part >= 1000) {
+                frac_part = 0;
+                int_part += 1;
+            }
+            
+            // ⚠️ 关键修复：不能直接对 int_part 应用负号（因为 -0 = 0）
+            // 需要在格式化字符串时显式添加负号
+            
+            // 步骤 4：找到 item->text 中的冒号并提取前缀
             const char *colon_pos = strchr(item->text, ':');
+            char prefix[16];
             if (colon_pos != NULL) {
                 size_t prefix_len = colon_pos - item->text + 1;
-                char prefix[16];
                 strncpy(prefix, item->text, prefix_len);
                 prefix[prefix_len] = '\0';
-                snprintf(buffer, sizeof(buffer), "%s%+d.%03d", 
-                        prefix, int_part, frac_part);
             } else {
-                snprintf(buffer, sizeof(buffer), "%s:%+d.%03d", 
-                        item->text, int_part, frac_part);
+                snprintf(prefix, sizeof(prefix), "%s:", item->text);
             }
+            
+            // 步骤 5：格式化数值（带符号）- 强制显示正负号前缀
+            char value_buffer[20];
+            if (is_negative && int_part == 0 && frac_part > 0) {
+                // 特殊处理 -0.xxx 的情况
+                snprintf(value_buffer, sizeof(value_buffer), "-%d.%03d", int_part, frac_part);
+            } else if (is_negative) {
+                snprintf(value_buffer, sizeof(value_buffer), "%d.%03d", -int_part, frac_part);
+            } else {
+                // ✅ 正数：强制显示 '+' 号前缀，保持格式统一
+                snprintf(value_buffer, sizeof(value_buffer), "+%d.%03d", int_part, frac_part);
+            }
+            
+            // 步骤 6：组合前缀和数值
+            snprintf(buffer, sizeof(buffer), "%s%s", prefix, value_buffer);
             
             // ✅ 非滚动模式：直接显示完整字符串
             OLED_ShowMixString(text_x, y, buffer, OLED_16X16_FULL, OLED_8X16_HALF);
